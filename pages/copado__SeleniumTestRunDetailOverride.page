@@ -1,0 +1,89 @@
+<apex:page standardController="copado__Selenium_Test_Run__c" extensions="copado.SeleniumTestRunResults,copado.LicenseHelper" standardStylesheets="false" id="thePage">
+    <head>
+        <c:ShowWebhook url="webhook/selenium/TestRun" recordId="{!copado__Selenium_Test_Run__c.Id}" />
+        <c:GAnalytics />
+    </head>
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/jquery.circliful.min.js')}" />
+    <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Statics,'css/jquery.circliful.css')}" />
+    <style type="text-css">
+        .circle-info-half { z-index: -1; }
+    </style>
+
+    <apex:outputPanel id="summaryPanelNoResults" rendered="{!count_all=0}">
+        <apex:pageMessage Id="msgNoTestRunResults" severity="INFO" strength="2" summary="{!$Label.copado__no_test_run_results}" />
+    </apex:outputPanel>
+
+    <!-- check that the feature is enabled, and the user has a license assigned -->
+    <apex:pageMessage severity="WARNING" strength="2" summary="{!possibleCSTErrorMsg}" rendered="{!!ISNULL(possibleCSTErrorMsg)}"></apex:pageMessage>
+
+    <apex:form id="theForm">
+        <apex:actionPoller action="{!refreshRunningData}"
+        enabled="{! OR(obj.Last_Status__c == 'Queued', obj.Last_Status__c == 'In Progress') }"
+        reRender="theForm" interval="5" timeout="600000"/>
+        <apex:detail id="detail" inlineEdit="true" relatedList="true" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}"/>
+
+    <apex:outputPanel id="summaryPanel" rendered="{!count_all!=0}">
+
+        <script type="text/javascript">
+        $copado( document ).ready(function() {
+            $copado("#test-circle").circliful({
+                text: 'Testing',
+                animationStep: 5,
+                foregroundBorderWidth: 5,
+                backgroundBorderWidth: 15,
+                percent: {!count_finished*100/count_all}
+            });
+            $copado("#test-circle .circle-info-half").attr('data-text', '{!count_finished}/{!count_all}');
+            $copado("#test-circle .circle-info-half").css('z-index', '-1');
+
+            $copado('div.selenese table td.failure_msg:contains("[Warning")').css('color', '#BF7F3F');
+            $copado('div.selenese table td.failure_msg:contains("[Failure")').css('color', '#ff6666');
+            $copado('div.selenese table td.index:contains("-")').parent().find('td').css('color', '#999');
+            $copado('div.selenese table td:nth-of-type(2):contains("echo")').parent().find('td').css('color', '#999');
+            var link = $copado('div.selenese > h2 a');
+            if(link&&link.length) {
+                link.each(function() {
+                    var id = $copado(this).attr('href').replace('/','');
+                    $copado(this).parent().append('&nbsp; <span style="font-size: 8pt;"><a href="copado:selenese/'+id+'">(open in recorder)</a></span>')
+                })
+            }
+
+        });
+        </script>
+
+        <apex:pageBlock id="pb" title="Last Result Summary" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}">
+            <apex:pageBlockSection columns="2" collapsible="false">
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel ></apex:outputPanel>
+                    <apex:outputPanel >
+                        <div id="test-circle" data-startdegree="0" data-type="full" data-dimension="150"
+                             data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                             data-text="{!count_finished}/{!count_all}"
+                             data-percent="{!count_finished*100/count_all}"
+                             data-fgcolor="{!if(count_errors>0, '#d68184', '#60C170')}"
+                             data-bgcolor="#eee" data-fill="#fff"></div>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlocktable id="pbt" value="{!LastResults}" var="r">
+                    <apex:column Id="colPlatform" value="{!r.copado__Platform__c}"/>
+                    <apex:column Id="colStatus" value="{!r.copado__Status__c}" />
+                </apex:pageBlocktable>
+            </apex:pageBlockSection>
+
+            <apex:repeat id="rptReports" value="{!reports}" var="r">
+                <apex:pageBlockSection title="{!r.Name}" collapsible="true" columns="1">
+                    <apex:outputText value="{!r.selenese}" escape="false" />
+                </apex:pageBlockSection>
+            </apex:repeat>
+        </apex:pageBlock>
+
+    </apex:outputPanel>
+    </apex:form>
+    <script>
+        ga('send', 'pageview', {
+            'page': '/SeleniumTestRunDetailOverride',
+            'title': 'Selenium Test Run Detail Override'
+        });
+    </script>
+</apex:page>

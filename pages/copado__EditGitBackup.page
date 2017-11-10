@@ -1,0 +1,80 @@
+<apex:page showHeader="true" sidebar="true" standardController="copado__Git_Backup__c" extensions="copado.EditBackupExtension" action="{!init}" id="thePage">
+    <apex:pageMessages id="messages"/>
+    <head>
+        <c:GAnalytics />
+        <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+        <script> var $copado = jQuery.noConflict(); </script>
+        <style type="text/css">
+            /*to force center multiselect component*/
+            div.duelingListBox{
+                margin-right: auto;
+                margin-left: auto;
+                width: 600px;
+            }
+        </style>
+    </head>
+    <apex:outputPanel rendered="false">
+        <apex:outputField rendered="false" value="{!backup.Name}" />
+        <apex:outputField value="{!backup.copado__Metadata_Types__c}"/>
+        <!-- Added to make sure that all fields are included in the standard controller record -->
+        <apex:repeat value="{!$ObjectType.copado__Git_Backup__c.FieldSets.copado__CustomFields}" var="f">
+            <apex:outputField value="{!backup[f]}"/>
+        </apex:repeat>
+    </apex:outputPanel>
+	<apex:form id="theForm" rendered="{!AND(showOptions,!showError)}">
+        <apex:sectionHeader title="{!$ObjectType.copado__Git_Backup__c.Label} {!$Label.copado__edit}" subtitle="{!IF(ISBLANK(backup.Name),'New ' +
+        $ObjectType.Git_Backup__c.Label ,backup.Name)}" description="{!$Label.copado__git_backup_edit_description}"/>
+        <apex:pageBlock id="pb_viewGitBackup"  mode="edit" helpUrl="http://docs.copa.do/copado/git-snapshot" helpTitle="{!$Label.copado__help_for_this_page}">
+            <apex:pageblockButtons >
+                <apex:commandButton action="{!save}" value="{!$Label.site.save}"/>
+                <apex:commandButton action="{!cancel}" value="{!$Label.site.cancel}"/>
+            </apex:pageblockButtons>
+    
+            <apex:actionRegion >  
+                <apex:actionFunction action="{!orgChanged}" name="orgChanged" reRender="pbsTypesSection" >
+                    <apex:param name="orgID" assignTo="{!orgID}" value="" />
+                </apex:actionFunction>
+           </apex:actionRegion>
+    
+            <apex:pageBlockSection showHeader="true" title="{!$Label.copado__basic_information}">
+                <apex:inputField required="true" value="{!backup.Name}" />
+                <apex:selectList required="true" value="{!backup.copado__Frequency__c}" size="1">
+                	<apex:selectOptions value="{!frequencyOptions}"/>
+                </apex:selectList>
+                <apex:inputField required="true" value="{!backup.copado__Git_Repository__c}" />
+                <apex:inputField required="true" value="{!backup.copado__Org__c}" id="iOrg" onchange="reTypes()" />
+                <apex:inputField required="true" value="{!backup.copado__Branch__c}" />
+                <apex:outputField value="{!backup.copado__Last_Backup__c}" />
+                <apex:inputField required="true" value="{!backup.copado__Git_Snapshot_Permissions__c}" />
+            </apex:pageBlockSection>
+                
+            <apex:pageBlockSection columns="1" title="{!$Label.copado__other_information}" rendered="{!showOtherInformation}">
+                <apex:repeat value="{!$ObjectType.copado__Git_Backup__c.FieldSets.copado__CustomFields}" var="f">
+                    <apex:inputField value="{!backup[f]}" required="{!OR(f.required, f.dbrequired)}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+    
+            <apex:pageBlockSection title="{!$Label.copado__advanced_metadata_filters}" collapsible="true" showHeader="true" id="pbsTypesSection" columns="1">
+    
+                <apex:pageBlockSectionItem >
+                    <c:MultiselectPicklist leftLabel="{!$ObjectType.copado__Git_Backup__c.fields.copado__Metadata_Types__c.Label}" pleftOptions="{!types}" rightLabel="{!$Label.copado__selected_types}" prightOptions="{!selectedTypes}" size="14" width="250px" id="siTypes"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <script>
+                //this method is a helper to refresh the org in the contorller
+                //and rerender the metadataTypes block
+                function reTypes(){
+                	// get from hidden lookup's input
+                    if( $copado('[id$="iOrg_lkid"]').val() != "000000000000000" ){
+                        //set spin
+                        $copado('[id$="siTypes"]').html('<center><img src="/img/loading.gif" /> <i>{!$Label.LOADING}<span id="retry-label"></span></i></center>');
+                        //controller refresh and later rerender
+                        orgChanged($copado('[id$="iOrg_lkid"]').val());
+                    }
+                }
+            </script>
+	    </apex:pageBlock>
+    </apex:form>
+    <c:CheckFeaturesComponent />
+</apex:page>

@@ -1,0 +1,112 @@
+<apex:page docType="html-5.0" showHeader="true" sidebar="true" standardController="copado__User_Story__c" extensions="copado.UserStoryCodeAnalysisRequestController" id="UserStoryCodeAnalysis">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+	<head>
+      <c:GAnalytics />
+      <script>
+          ga('send', 'pageview', {
+            'page': '/UserStoryCodeAnalysisRequested',
+            'title': 'User Story Code Analysis Requested'
+          });
+      </script>   
+      <apex:slds />
+      <apex:stylesheet value="{!URLFOR($Resource.copado__SLDS, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<style type="text/css">
+                .col-right{
+                    margin-left : 15px;
+                }
+                .msgIcon {
+                    display: none!important
+                }
+                .customMessage * {
+                    color: #fff!important
+                }
+                .customMessage {
+                    margin: 5px 0!important;
+                    /*max-width: 1280px;*/
+                    opacity: 1!important;
+                    width: 100%;
+                    font-size: 12px;
+                    border: 0px;
+                    padding-left: 10px;
+                }
+                .message {
+                    opacity: 1
+                }
+                .slds-col{
+                    padding-right: 20px;
+                }
+                .title{
+                    text-transform: uppercase;
+                }
+                .slds-has-flexi-truncate{
+                    padding: 4px 0 4px 0;
+                }
+                #overlay {
+                    background-color: black;
+                    position: fixed;
+                    top: 0; right: 0; bottom: 0; left: 0;
+                    opacity: 0.5;
+                    -moz-opacity:0.5;
+                    -khtml-opacity: 0.5;
+                    z-index: 9999;
+                }
+            </style>            
+            <script>
+                var j$ = jQuery.noConflict();
+
+                j$(document).ready(function(){
+                   overridePageMessages();    
+                });
+                        
+                function overridePageMessages(){    
+                    
+                    textureEffect = 'slds-theme--alert-texture';
+                                 
+                    j$('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+                    j$('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+                    j$('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+                    j$('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                                     
+                    j$('.errorM3').removeClass('errorM3'); 
+                    j$('.confirmM3').removeClass('confirmM3'); 
+                    j$('.infoM3').removeClass('infoM3');   
+                    j$('.warningM3').removeClass('warningM3');  
+                }
+            </script> 
+
+    </head>
+    <body class="slds-scope">
+    <apex:form id="theForm">
+    	<div class="slds-page-header">
+                <apex:outputPanel layout="block" id="pageMessages">
+                    <apex:pagemessages id="pmessage"/>
+                </apex:outputPanel>
+                <div class="slds-grid">
+	                <div class="slds-col slds-has-flexi-truncate">    	
+						<div class="slds-media">
+						<div class="slds-media__figure">
+						  <span class="slds-icon_container slds-icon-standard-skill" title="User Story Code Analysis">
+						    <svg class="slds-icon" aria-hidden="true">
+						      <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#skill')}"></use>
+						    </svg>
+						  </span>
+						</div>
+						<div class="slds-media__body">
+						  <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="User Story Code Analysis">{!$Label.copado__user_story_code_analysis}</h1>
+						  <p class="slds-text-body_small slds-line-height_reset">{!$Label.copado__source_code_analysis}</p>
+						</div>
+						</div>
+						</div>
+						
+	                    <div class="slds-col slds-no-flex slds-grid slds-align-top ">
+	                        <div class="slds-button-group" role="group">
+								<button class="slds-button slds-button_neutral" onclick="window.history.back();">Back</button>
+	                        </div>
+	                    </div>	
+	                    </div>					
+					</div>
+    </apex:form>
+    </body>
+</html>
+</apex:page>

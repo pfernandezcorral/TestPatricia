@@ -1,0 +1,658 @@
+<apex:page id="thePage" standardController="copado__Promotion__c" extensions="copado.PromoteChangesExtension,copado.Settings">
+    <apex:slds />
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <div class="slds-m-horizontal_medium">
+            <head>
+                <c:GAnalytics />
+                <c:WizardUtils />
+
+                <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/libs/jquery.min.1.10.2.js')}" />
+
+                <apex:includeScript value="{!URLFOR($Resource.statusManager) }" />
+                <apex:includeScript value="{!URLFOR($Resource.utilsV2) }"/>
+                <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/Cometd.js')}"/>
+                <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/jquery.cometd.js')}"/>
+                <apex:includeScript value="{!URLFOR($Resource.copadoStreamingService) }" />
+                <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/jquery.circliful.min.js')}" />
+                <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Statics,'css/jquery.circliful.css')}" />
+                 
+                <!-- DataTable -->
+                <apex:includeScript value="{!URLFOR($Resource.copado__DataTables10,'DataTables10/datatables.min.js')}" />
+                <link rel="stylesheet" typea="text/css" href="{!URLFOR($Resource.DataTables10,'DataTables10/datatables.min.css')}" />
+
+
+                <style type="text-css">
+                    .circle-info-half { z-index: -1; }
+
+                    .filterMatches{
+                      background-color: #BFFF00;
+                    }
+                    .tertiaryPalette{
+                      color: #000 !important;
+                    }
+                    .dt-buttons{
+                      margin-left: 10px;
+                    }
+                </style>
+
+                <script id="inits">
+                    var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(c){var a="",d,b,f,g,h,e,j=0;for(c=Base64._utf8_encode(c);j<c.length;)d=c.charCodeAt(j++),b=c.charCodeAt(j++),f=c.charCodeAt(j++),g=d>>2,d=(d&3)<<4|b>>4,h=(b&15)<<2|f>>6,e=f&63,isNaN(b)?h=e=64:isNaN(f)&&(e=64),a=a+this._keyStr.charAt(g)+this._keyStr.charAt(d)+this._keyStr.charAt(h)+this._keyStr.charAt(e);return a},decode:function(c){var a="",d,b,f,g,h,e=0;for(c=c.replace(/[^A-Za-z0-9\+\/\=]/g,"");e<c.length;)d=this._keyStr.indexOf(c.charAt(e++)),b=this._keyStr.indexOf(c.charAt(e++)),g=this._keyStr.indexOf(c.charAt(e++)),h=this._keyStr.indexOf(c.charAt(e++)),d=d<<2|b>>4,b=(b&15)<<4|g>>2,f=(g&3)<<6|h,a+=String.fromCharCode(d),64!=g&&(a+=String.fromCharCode(b)),64!=h&&(a+=String.fromCharCode(f));return a=Base64._utf8_decode(a)},_utf8_encode:function(c){c=c.replace(/\r\n/g,"\n");for(var a="",d=0;d<c.length;d++){var b=c.charCodeAt(d);128>b?a+=String.fromCharCode(b):(127<b&&2048>b?a+=String.fromCharCode(b>>6|192):(a+=String.fromCharCode(b>>12|224),a+=String.fromCharCode(b>>6&63|128)),a+=String.fromCharCode(b&63|128))}return a},_utf8_decode:function(c){for(var a="",d=0,b=c1=c2=0;d<c.length;)b=c.charCodeAt(d),128>b?(a+=String.fromCharCode(b),d++):191<b&&224>b?(c2=c.charCodeAt(d+1),a+=String.fromCharCode((b&31)<<6|c2&63),d+=2):(c2=c.charCodeAt(d+1),c3=c.charCodeAt(d+2),a+=String.fromCharCode((b&15)<<12|(c2&63)<<6|c3&63),d+=3);return a}};
+                    var $copado = jQuery.noConflict();
+                    var __sfdcSessionId = '{!GETSESSIONID()}';
+                </script>
+                <script src="/soap/ajax/32.0/connection.js"></script>
+                    <script>
+                    var copadoApp = {
+                        ns: '{!JSENCODE(namespace)}',
+                        promotionId: '{!JSENCODE(Promotion__c.Id)}',
+                        sourceOrgId: '{!JSENCODE(Promotion__c.source_org_credential__c)}',
+                        destinationOrgId: '{!JSENCODE(Promotion__c.Destination_Org_Credential__c)}',
+
+                        createDeployment: function(deploymentName, isTestOnly, convertGit2Metadata, testLevel){
+                            if(copadoApp.sourceOrgId == ''){
+                                alert(copadoLabels.SOURCE_ORG_CREDENTIAL_REQUIRED_FOR_DEPLOYMENT);
+                                return false;
+                            }
+                            if(copadoApp.destinationOrgId == ''){
+                                alert(copadoLabels.DESTINATION_ORG_CREDENTIAL_REQUIRED_FOR_DEPLOYMENT);
+                                return false;
+                            }
+                            if(isTestOnly==true)setLockScreenMessage('Creating Validation Deployment');
+                            lockScreen();
+
+                            globalJobsManagerStart(copadoApp.promotionId, 'Promotion', "{!jobsManagerMatchingKeys}");
+
+                            copadoApp.callBackEnd(deploymentName, isTestOnly, convertGit2Metadata, testLevel);
+                        },
+                        sforceFailure: function(error){
+                            console.error('An error has occured with the Salesforce Ajax Toolkit: ', error);
+                            alert(error);
+                        },
+                        callBackEnd: function(deploymentName, isTestOnly, convertGit2Metadata, testLevel){
+                            var isTestOnly = isTestOnly || false;
+                            if(deploymentName==null){
+                                unlockScreen();
+                                return false;
+                            }
+                            else{
+                                console.log('Calling Copado for: ', copadoApp.promotionId);
+                                deploymentName = deploymentName.substring(0,80);
+                                var url = '{!JSENCODE(urlBase)}promote/'+copadoApp.promotionId+'{!JSENCODE(urlParameters)}&deploy=false&deploymentName='+encodeURIComponent(deploymentName)+'&checkOnly='+isTestOnly+'&singleStep='+convertGit2Metadata+'&testLevel='+testLevel;
+
+                                dw.u.getRemote(url, function(res){
+                                    console.log('Promote callback: ', res);
+                                    copadoApp.callComplete();
+                                }, true, true);
+                            }
+                        },
+                        callComplete: function(){
+                            unlockScreen();
+                            reRenderForm();
+                        }
+                    }
+                </script>
+                <script>
+                    var j$ = jQuery.noConflict();
+                    var Copado_Licenses = {!CurrentUserLicenses};
+
+                    //Modal Open
+                    function openModal(){
+                      j$('#backdrop').addClass('slds-backdrop--open');
+                      j$('#modal').addClass('slds-fade-in-open');
+                      return null;
+                    }
+
+                    //Modal Close
+                    function closeModal(){
+                      j$('#modal').removeClass('slds-fade-in-open');
+                      j$('#backdrop').removeClass('slds-backdrop--open');
+                    }
+
+                    j$(document).ready(function(){
+                        j$('#toggleBtn').click(function(){
+                            j$('#backdrop').addClass('slds-backdrop--open');
+                            j$('#modal').addClass('slds-fade-in-open');
+                            return null;
+                        });
+                    });
+                </script>
+              <style type="text/css">
+                    .col-right{
+                        margin-left : 15px;
+                    }
+                    .msgIcon {
+                        display: none!important
+                    }
+                    .customMessage * {
+                        color: #fff!important
+                    }
+                    .customMessage {
+                        margin: 5px 0!important;
+                        max-width: 1280px;
+                        opacity: 1!important;
+                        width: 100%;
+                        font-size: 12px;
+                        border: 0px;
+                        padding-left: 10px;
+                    }
+                    .message {
+                        opacity: 1
+                    }
+                    .slds-col{
+                        padding-right: 20px;
+                    }
+                    .title{
+                        text-transform: uppercase;
+                    }
+                    #overlay {
+                      background-color: black;
+                      position: fixed;
+                      top: 0; right: 0; bottom: 0; left: 0;
+                      opacity: 0.5;
+                      -moz-opacity:0.5;
+                      -khtml-opacity: 0.5;
+                      z-index: 10;
+                    }
+                    .slds-has-flexi-truncate{
+                        padding: 4px 0 4px 0;
+                    }
+                </style>
+                <script>
+                    var j$ = jQuery.noConflict();
+
+                    j$(document).ready(function(){
+                       overridePageMessages();
+                    });
+
+                    function overridePageMessages(){
+
+                        textureEffect = 'slds-theme--alert-texture';
+
+                        j$('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);
+                        j$('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);
+                        j$('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);
+                        j$('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);
+
+                        j$('.errorM3').removeClass('errorM3');
+                        j$('.confirmM3').removeClass('confirmM3');
+                        j$('.infoM3').removeClass('infoM3');
+                        j$('.warningM3').removeClass('warningM3');
+                    }
+                </script>
+
+                <script type="text/javascript">
+                    j$(document).ready(function(){
+                      
+                     var accountsTable = j$('[cid$="userStoryMetadatasTable"]').parent('table').eq(0).DataTable({
+                       //sets record lengths to show in picklist
+                       aLengthMenu: [
+                         [10, 25, 50, 100, 200, -1],
+                         [10, 25, 50, 100, 200, "All"]
+                       ],
+                       "iDisplayLength": 10
+                     });
+                     
+                    });
+                </script>
+
+            </head>
+
+            <c:ScreenLocker id="cmpScreenLocker" msg="{!$Label.copado__creating_deployment}" />
+
+            <apex:form id="theForm">
+                <apex:actionFunction name="reRenderForm" reRender="theForm"/>
+                <apex:pageMessages id="theMessages" />
+
+                <c:JobsManager matchingKeys="{!jobsManagerMatchingKeys}"></c:JobsManager>
+
+                <apex:outputPanel rendered="{!promotion.copado__Source_Environment__c != null}">
+                  <div class="slds-m-vertical_x-small">
+                    <div class="slds-grid" style="{!IF(Promotion__c.Back_Promotion__c,'transform: rotate(180deg);','')}">
+                      <div class="slds-tabs--path" role="application">
+                        <ul class="slds-tabs--path__nav" role="tablist">
+                            <li class="slds-tabs--path__item {!IF(promotion.Status__c == 'Completed','slds-is-complete slds-is-won','slds-is-current')}" role="presentation">
+                                <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                    <span class="slds-tabs--path__title" style="{!IF(Promotion__c.Back_Promotion__c,'transform: rotate(180deg);','')}">
+                                        {!Promotion__c.Source_Environment__r.Name}
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="slds-tabs--path__item {!IF(promotion.Status__c == 'Completed','slds-is-complete slds-is-won','slds-is-incomplete')}" role="presentation">
+                                <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                    <span class="slds-tabs--path__title" style="{!IF(Promotion__c.Back_Promotion__c,'transform: rotate(180deg);','')}">
+                                        {!Promotion__c.Destination_Environment__r.Name}
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="false">
+                    <apex:outputField value="promotion.Source_Environment__c"/>
+                    <apex:outputField value="promotion.Destination_Environment__c"/>
+                </apex:outputPanel>
+                <apex:outputPanel id="pnlDetail" >
+                    <apex:detail id="detail"  inlineEdit="false" showChatter="true" relatedList="true" title="true" />
+                </apex:outputPanel>
+
+                <div class="slds-modal" aria-hidden="false" role="dialog" id="modal">
+                    <div class="slds-modal__container">
+                      <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="{!$Label.CLOSE}" onclick="closeModal(); return false;">
+                          <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                          </svg>
+                          <span class="slds-assistive-text">{!$Label.CLOSE}</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Deployment Details</h2>
+                      </header>
+                      <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <div class="slds-form slds-form_horizontal">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-id-01">Deployment Name</label>
+                                    <div class="slds-form-element__control">
+                                        <input type="text" id="deploymentName" class="slds-input" value="Promotion"/>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                      <span class="slds-checkbox">
+                                        <input type="checkbox" name="default" id="validationOnly" value="on" />
+                                        <label class="slds-checkbox__label" for="validationOnly">
+                                          <span class="slds-checkbox_faux"></span>
+                                          <span class="slds-form-element__label">Validation Only</span>
+                                        </label>
+                                      </span>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                      <span class="slds-checkbox">
+                                        <input type="checkbox" name="default" id="convertGit2Metadata" value="on"/>
+                                        <label class="slds-checkbox__label" for="convertGit2Metadata">
+                                          <span class="slds-checkbox_faux"></span>
+                                          <span class="slds-form-element__label">Combine Git and Metadata selections (as Metadata)</span>
+                                        </label>
+                                      </span>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="input-id-01">Test Level</label>
+                                    <div class="slds-form-element__control">
+                                        <select id="testLevel" data-selected="" class="slds-select" >
+                                            <option value="NoTestRun" selected="selected">No Test Run</option>
+                                            <option value="RunSpecifiedTests" >Run Specified Tests</option>
+                                            <option value="RunLocalTests">Run Local Tests</option>
+                                            <option value="RunAllTestsInOrg">Run All Tests In Org</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                      </div>
+                      <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick="closeModal(); return false;">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick="submitModal(); return false;">Submit</button>
+                      </footer>
+                    </div>
+                </div>
+                <div class="slds-backdrop" id="backdrop"></div>
+
+                <script type="text/javascript">
+                        $deploymentName = $copado('#deploymentName');
+                        $isTestOnly = $copado('#validationOnly');
+                        $convertGit2Metadata = $copado('#convertGit2Metadata');
+                        $testLevel = $copado('[id$=testLevel]');
+
+                        function submitModal(){
+                            var deploymentName = $deploymentName.val();
+                            var isTestOnly = $isTestOnly.is(':checked');
+                            var convertGit2Metadata = $convertGit2Metadata.is(':checked');
+                            var testLevel = $testLevel.val();
+                            console.log(deploymentName, isTestOnly, convertGit2Metadata, testLevel);
+                            closeModal();
+                            copadoApp.createDeployment(deploymentName, isTestOnly, convertGit2Metadata, testLevel);
+                        }
+                    </script>
+            </apex:form>
+
+            <apex:pageBlock id="scas" title="Static Code Analysis Summary" rendered="{!scaAccess}">
+                <div class="slds-grid slds-wrap slds-grid_pull-padded">
+                    <div class="slds-p-horizontal_small slds-size_1-of-4 slds-medium-size_1-of-6 slds-large-size_2-of-12">
+                    </div>
+                    <div class="slds-p-horizontal_small slds-size_1-of-4 slds-medium-size_2-of-6 slds-large-size_4-of-12">
+                        <br/>
+                        <b><apex:outputLabel value="Average Score"/></b>&nbsp;&nbsp;<apex:outputText value="{!averageSCAscore}"/><br/>
+                        <b><apex:outputLabel value="Worst Score"/></b>&nbsp;&nbsp;<apex:outputText value="{!worstSCAscore}"/><br/>
+                        <b><apex:outputLabel value="Worst Scored User Story"/></b>&nbsp;&nbsp;<a href="/{!mockStoryWrapper.copado__User_Story__c}"><img src="/img/icon/custom51_100/books24.png"/></a>&nbsp;<apex:outputField value="{!mockStoryWrapper.copado__User_Story__c}"/>
+                    </div>
+                    <script type="text/javascript">
+                        $copado( document ).ready(function() {
+                            $copado("#test-circleSCA").circliful({
+                                text: 'Static Code Analysis Score',
+                                animationStep: 5,
+                                foregroundBorderWidth: 5,
+                                backgroundBorderWidth: 15,
+                                percent: {!IF(sourceEnvMaxSCAScore>0, worstSCAscore/sourceEnvMaxSCAScore, 0)}
+                            });
+                            $copado("#test-circleSCA .circle-info-half").attr('data-text', '{!IF(sourceEnvMaxSCAScore>0, (TEXT(worstSCAscore)+"/"+TEXT(sourceEnvMaxSCAScore)), "0/0")}');
+                            $copado("#test-circleSCA .circle-info-half").css('z-index', '-1');
+                        });
+                    </script>
+                    <div class="slds-p-horizontal_small slds-size_1-of-4 slds-medium-size_2-of-6 slds-large-size_4-of-12">
+                        <center>
+                        <div class="slds-text-title_caps">Static Code Analysis Score</div>
+                        <div id="test-circleSCA" data-startdegree="0" data-type="full" data-dimension="150"
+                             data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                             data-text="{!IF(sourceEnvMaxSCAScore>0, (TEXT(worstSCAscore)+"/"+TEXT(sourceEnvMaxSCAScore)), "0/0")}"
+                             data-percent="{!IF(sourceEnvMaxSCAScore>0, worstSCAscore*100/sourceEnvMaxSCAScore, 0)}"
+                             data-fgcolor="{!IF(AND(sourceEnvMaxSCAScore>0,worstSCAscore/sourceEnvMaxSCAScore<0.33), '#60C170 ',
+                                                IF(AND(sourceEnvMaxSCAScore>0,worstSCAscore/sourceEnvMaxSCAScore<0.66), '#ffffb3 ', '#d68184 '))}"
+                             data-bgcolor="#eee" data-fill="#fff" style="margin:auto;">
+                        </div>
+                        </center>
+                    </div>
+                    <div class="slds-p-horizontal_small slds-size_1-of-4 slds-medium-size_1-of-6 slds-large-size_2-of-12">
+                    </div>
+                </div>
+            </apex:pageBlock>
+
+            <apex:outputPanel id="summaryPanel">
+                <apex:pageBlock id="strs" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, isCSTEnabled)}">
+                    <script type="text/javascript">
+                        $copado( document ).ready(function() {
+                            $copado("#test-circleSRT").circliful({
+                                text: 'Source Regression Test',
+                                animationStep: 5,
+                                foregroundBorderWidth: 5,
+                                backgroundBorderWidth: 15,
+                                percent: {!IF(str.count_all_Source_Regression>0, str.count_finished_Source_Regression*100/str.count_all_Source_Regression, 0)}
+                            });
+
+                            $copado("#test-circleSRT .circle-info-half").attr('data-text', '{!IF(str.count_all_Source_Regression>0, (TEXT(str.count_finished_Source_Regression)+"/"+TEXT(str.count_all_Source_Regression)), "0/0")}');
+                            $copado("#test-circleSRT .circle-info-half").css('z-index', '-1');
+
+                            $copado("#test-circleDRT").circliful({
+                                text: 'Destination Regression Test',
+                                animationStep: 5,
+                                foregroundBorderWidth: 5,
+                                backgroundBorderWidth: 15,
+                                percent: {!IF(str.count_all_Destination_Regression>0, str.count_finished_Destination_Regression*100/str.count_all_Destination_Regression, 0)}
+                            });
+
+                            $copado("#test-circleDRT .circle-info-half").attr('data-text', '{!IF(str.count_all_Destination_Regression>0, (TEXT(str.count_finished_Destination_Regression)+"/"+TEXT(str.count_all_Destination_Regression)), "0/0")}');
+                            $copado("#test-circleDRT .circle-info-half").css('z-index', '-1');
+
+                            $copado("#test-circleSUST").circliful({
+                                text: 'Source User Story Test',
+                                animationStep: 5,
+                                foregroundBorderWidth: 5,
+                                backgroundBorderWidth: 15,
+                                percent: {!IF(str.count_all_Source_User_Story>0, str.count_finished_Source_User_Story*100/str.count_all_Source_User_Story, 0)}
+                            });
+                            $copado("#test-circleSUST .circle-info-half").attr('data-text', '{!IF(str.count_all_Source_User_Story>0, (TEXT(str.count_finished_Source_User_Story)+"/"+TEXT(str.count_all_Source_User_Story)), "0/0")}');
+                            $copado("#test-circleSUST .circle-info-half").css('z-index', '-1');
+
+                            $copado("#test-circleDUST").circliful({
+                                text: 'Destination User Story Test',
+                                animationStep: 5,
+                                foregroundBorderWidth: 5,
+                                backgroundBorderWidth: 15,
+                                percent: {!IF(str.count_all_Destination_User_Story>0, str.count_finished_Destination_User_Story*100/str.count_all_Destination_User_Story, 0)}
+                            });
+                            $copado("#test-circleDUST .circle-info-half").attr('data-text', '{!IF(str.count_all_Destination_User_Story>0, (TEXT(str.count_finished_Destination_User_Story)+"/"+TEXT(str.count_all_Destination_User_Story)), "0/0")}');
+                            $copado("#test-circleDUST .circle-info-half").css('z-index', '-1');
+
+                        });
+                    </script>
+
+                    <apex:pageBlockSection id="sTestResults" columns="1" collapsible="true" title="{!$Label.copado__selenium_test_results_summary}">
+                        <div class="slds-grid slds-grid_pull-padded">
+                            <div class="slds-col slds-size_1-of-4 slds-medium-size_2-of-8 slds-large-size_3-of-12">
+                                <div style="text-align: center; height: 160px">
+                                    <div class="slds-text-title_caps">{!$Label.SOURCE_REGRESSION_TESTS}</div>
+                                    <div id="test-circleSRT" data-startdegree="0" data-type="full" data-dimension="150"
+                                         data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                                         data-text="{!IF(str.count_all_Source_Regression>0, TEXT(str.count_finished_Source_Regression)+"/"+TEXT(str.count_all_Source_Regression), "0/0")}"
+                                         data-percent="{!IF(str.count_all_Source_Regression>0, str.count_finished_Source_Regression*100/str.count_all_Source_Regression, 0)}"
+                                         data-fgcolor="{!if(str.count_errors_Source_Regression>0, '#d68184', '#60C170')}"
+                                         data-bgcolor="#eee" data-fill="#fff" style="margin:auto;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-4 slds-large-size_1-of-4">
+                                <div style="text-align: center;">
+                                    <div class="slds-text-title_caps">{!$Label.SOURCE_USER_STORY_TESTS}</div>
+                                    <div id="test-circleSUST" data-startdegree="0" data-type="full" data-dimension="150"
+                                         data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                                         data-text="{!IF(str.count_all_Source_User_Story>0, TEXT(str.count_finished_Source_User_Story)+"/"+TEXT(str.count_all_Source_User_Story), "0/0")}"
+                                         data-percent="{!IF(str.count_all_Source_User_Story>0, str.count_finished_Source_User_Story*100/str.count_all_Source_User_Story, 0)}"
+                                         data-fgcolor="{!if(str.count_errors_Source_User_Story>0, '#d68184', '#60C170')}"
+                                         data-bgcolor="#eee" data-fill="#fff" style="margin:auto;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-4 slds-large-size_1-of-4">
+                                <div style="text-align: center;">
+                                    <div class="slds-text-title_caps">{!$Label.DESTINATION_REGRESSION_TESTS}</div>
+                                    <div id="test-circleDRT" data-startdegree="0" data-type="full" data-dimension="150"
+                                         data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                                         data-text="{!IF(str.count_all_Destination_Regression>0, TEXT(str.count_finished_Destination_Regression)+"/"+TEXT(str.count_all_Destination_Regression), "0/0")}"
+                                         data-percent="{!IF(str.count_all_Destination_Regression>0, str.count_finished_Destination_Regression*100/str.count_all_Destination_Regression, 0)}"
+                                         data-fgcolor="{!if(str.count_errors_Destination_Regression>0, '#d68184', '#60C170')}"
+                                         data-bgcolor="#eee" data-fill="#fff" style="margin:auto;"></div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-4 slds-large-size_1-of-4">
+                                <div style="text-align: center;">
+                                    <div class="slds-text-title_caps">{!$Label.DESTINATION_USER_STORY_TESTS}</div>
+                                    <div id="test-circleDUST" data-startdegree="0" data-type="full" data-dimension="150"
+                                         data-info="platforms" data-width="20" data-fontsize="18" data-animationstep="0"
+                                         data-text="{!IF(str.count_all_Destination_User_Story>0, TEXT(str.count_finished_Destination_User_Story)+"/"+TEXT(str.count_all_Destination_User_Story), "0/0")}"
+                                         data-percent="{!IF(str.count_all_Destination_User_Story>0, str.count_finished_Destination_User_Story*100/str.count_all_Destination_User_Story, 0)}"
+                                         data-fgcolor="{!if(str.count_errors_Destination_User_Story>0, '#d68184', '#60C170')}"
+                                         data-bgcolor="#eee" data-fill="#fff" style="margin:auto;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </apex:outputPanel>
+
+            <apex:form id="USform">
+                <div id="wrapper">
+                    <div id="left" style="width:50%; margin-left:0px; float:left;">
+                        <apex:pageBlock id="pbLeft" title="{!$Label.copado__user_stories_not_included_in_promotion}" >
+                            <apex:pageBlockButtons id="pbButtons2" location="top">
+                                <apex:commandButton status="tblStatus" reRender="USform" id="btnGetUserStories" value="{!$Label.copado__add_selected_user_stories}" action="{!addStoriesToPromotion}" onclick="disableAddSelectedButton();" oncomplete="reRenderSeleniumTestGroups(); enableAddSelectedButton();" styleClass="slds-button slds-button--neutral"/>
+                            </apex:pageBlockButtons>
+
+                            <apex:actionStatus id="tblStatus" onstop="levelPageBlockHeight()" onstart="levelPageBlockHeight()">
+                                <apex:facet name="start">
+                                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                                        <tbody>
+                                            <tr class="headerRow">
+                                                <th class="noRowsHeader" scope="col"><img src="/img/loading.gif" /></th>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </apex:facet>
+
+                                <apex:facet name="stop">
+                                    <apex:pageBlockTable id="pbTableUserStories" value="{!userStories}" var="u" styleClass="slds-table slds-table_bordered">
+                                        <apex:column id="col1" width="22">
+                                            <apex:facet name="header">
+                                                <input type="checkbox" id="chkAll" onclick="checkAll(this,'{!$Component.pbTableUserStories}','chkUserStory')" />
+                                            </apex:facet>
+                                            <apex:inputCheckbox id="chkUserStory" value="{!u.selected}" />
+                                        </apex:column>
+                                        <apex:column width="30">
+                                            <apex:facet name="header">View</apex:facet>
+                                            <center><a href="/{!u.userStory.Id}"><img src="/img/icon/custom51_100/books24.png"/></a></center>
+                                        </apex:column>
+                                        <apex:repeat value="{!promotionRelatedList}" var="prl">
+                                            <apex:column >
+                                                <apex:facet name="header">{!prl.label}</apex:facet>
+                                                <apex:outputField value="{!u.userStory[prl]}" />
+                                            </apex:column>
+                                        </apex:repeat>
+                                    </apex:pageBlockTable>
+                                </apex:facet>
+                            </apex:actionStatus>
+                        </apex:pageBlock>
+                    </div>
+                    <div id="right" style="width:50%; float:right; position:relative;">
+                        <apex:pageBlock id="pbRight" title="{!$Label.copado__user_stories_to_be_promoted}" >
+                            <apex:pageBlockButtons id="pbButtons1" location="top">
+                                <button id="btnRemoveSelected" class="slds-button slds-button--neutral" value="{!$Label.REMOVE_SELECTED_USER_STORIES}" onclick="deleteSelections(); return false;">{!$Label.REMOVE_SELECTED_USER_STORIES}</button>
+
+                                <apex:commandButton reRender="USform" id="btnCreateDeployment" value="{!$Label.copado__create_deployment}" onclick="openModal(); return false;" styleClass="slds-button slds-button--brand" disabled="{!!enableCreateDeploymentButton}"/>
+                            </apex:pageBlockButtons>
+                            <apex:actionFunction name="doRemove" reRender="USform" action="{!removeSelectedUserStories}" status="tblStatus1" oncomplete="reRenderSeleniumTestGroups();"/>
+                            <apex:actionStatus id="tblStatus1" onstop="levelPageBlockHeight()" onstart="levelPageBlockHeight()">
+                                <apex:facet name="start">
+                                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                                        <tbody>
+                                            <tr class="headerRow">
+                                                <th class="noRowsHeader" scope="col"><img src="/img/loading.gif" /></th>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </apex:facet>
+                                <apex:facet name="stop">
+                                    <apex:pageBlockTable id="pbTablePromotedStories" value="{!promotedWrappedStories}" var="u" styleClass="slds-table slds-table_bordered">
+                                        <apex:column id="col1" width="22">
+                                            <apex:facet name="header">
+                                                <input type="checkbox" id="chkAll" onclick="checkAll(this,'{!$Component.pbTablePromotedStories}','chkUserStory')" />
+                                            </apex:facet>
+                                            <apex:inputCheckbox id="chkUserStory" value="{!u.selected}" />
+                                        </apex:column>
+                                        <apex:column width="30">
+                                            <apex:facet name="header">View</apex:facet>
+                                            <center><a href="/{!u.promotedUS.User_Story__r}"><img src="/img/icon/custom51_100/books24.png"/></a></center>
+                                        </apex:column>
+                                        <apex:repeat value="{!promotionRelatedList}" var="prl">
+                                            <apex:column >
+                                                <apex:facet name="header">{!prl.label}</apex:facet>
+                                                <apex:outputField value="{!u.promotedUS.User_Story__r[prl]}" />
+                                            </apex:column>
+                                        </apex:repeat>
+                                    </apex:pageBlockTable>
+                                </apex:facet>
+                            </apex:actionStatus>
+                        </apex:pageBlock>
+                    </div>
+                </div>
+                <script>
+                    copadoApp.promotedUserStoryIds = '{!promotedUserStoryIds}';
+                </script>
+            </apex:form>
+
+            <apex:form id="STGform">
+                <apex:actionPoller action="{!refreshSeleniumTestGroups}" enabled="{!IsSeleniumRunning}" reRender="STGform,summaryPanel" interval="5"/>
+                <apex:actionFunction name="reRenderSeleniumTestGroups" action="{!recalcSeleniumTestGroups}"/>
+
+                    <apex:pageBlock id="stg" title="{!$Label.copado__promotion_selenium_tests}">
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton value="{!$Label.copado__promotion_run_source_tests_regression}" action="{!runTestsSourceRegression}" styleClass="slds-button slds-button--neutral"/>
+                        <apex:commandButton value="{!$Label.copado__promotion_run_source_tests_user_story}" action="{!runTestsSourceUserStory}" styleClass="slds-button slds-button--neutral"/>
+                        <apex:commandButton value="{!$Label.copado__promotion_run_destination_tests_regression}" action="{!runTestsDestinationRegression}" styleClass="slds-button slds-button--neutral"/>
+                        <apex:commandButton value="{!$Label.copado__promotion_run_destination_tests_user_story}" action="{!runTestsDestinationUserStory}" styleClass="slds-button slds-button--neutral"/>
+                    </apex:pageBlockButtons>
+                        <apex:pageBlockTable value="{!seleniumTestGroups}" var="st" styleClass="slds-table slds-table_bordered">
+                            <apex:column id="col1" width="50" headerValue="{!$Label.copado__selenium_test_group}">
+                                <apex:outputLink value="{!URLFOR($Action.copado__Selenium_Test_Group__c.View, st.testGroup.Id)}">{!st.testGroup.Name}</apex:outputLink>
+                            </apex:column>
+                            <apex:column id="col3" value="{!st.testGroup.copado__Type__c}" width="30"/>
+                            <apex:column id="col2" value="{!st.location}" width="30" headerValue="Location"/>
+                            <apex:column id="col4" value="{!st.testGroup.copado__Environment__c}" width="30"/>
+                            <apex:column id="col5" value="{!st.testGroup.copado__Status_Date__c}" width="30"/>
+                            <apex:column id="col6" value="{!st.testGroup.copado__Status__c}" width="40"/>
+                            <apex:column id="col7" value="{!st.testGroup.copado__Status_Icon__c}" width="10"/>
+                        </apex:pageBlockTable>
+                    </apex:pageBlock>
+            </apex:form>
+            
+            <apex:form id="userStoryMetadataForm">    
+                    <apex:pageBlock id="userStoryMetadata" title="{!$Label.copado__promotion_user_story_metadata}">
+                        <apex:pageBlockTable value="{!userStoryMetadatas}" var="metadata" styleClass="slds-table slds-table_bordered" html-cid="userStoryMetadatasTable" rendered="{!userStoryMetadatas.size>0}">
+                            <apex:column id="col1" width="60" headerValue="Metadata">
+                                <apex:outputLink value="/{!metadata.Id}">{!metadata.copado__Metadata_API_Name__c}</apex:outputLink>
+                            </apex:column>  
+                            <apex:column id="col2" value="{!metadata.copado__User_Story__c}" width="30"/>  
+                            <apex:column id="col3" value="{!metadata.copado__Status__c}" width="30"/>  
+                            <apex:column id="col4" value="{!metadata.copado__Status_Icon__c}" width="10"/> 
+                            <apex:column id="col5" value="{!metadata.LastModifiedDate}" width="30"/>  
+                        </apex:pageBlockTable>
+                    </apex:pageBlock> 
+            </apex:form>
+
+            <script id="script_CheckAll" type="text/javascript" src="{!URLFOR($Resource.common) }"></script>
+            <script>
+                function levelPageBlockHeight(){
+                    var $l = $copado('div[id$="pbLeft"]');
+                    var $r = $copado('div[id$="pbRight"]');
+                    if($l.height() > $r.height())$r.height($l.height());
+                    else $l.height($r.height());
+                }
+                $copado( document ).ready(function() {
+                    levelPageBlockHeight();
+                });
+
+
+                function deleteSelections(){
+                    var doDel = confirm('{!$Label.ARE_YOU_SURE}');
+                    if(doDel){
+                        doRemove();
+                        return false;
+                    }
+                    else{
+                        return false;
+                    }
+                }
+
+                function disableAddSelectedButton(){
+
+                    $copado('[id$="btnGetUserStories"]').prop('disabled', true);
+
+                }
+
+                function enableAddSelectedButton(){
+                    $copado('[id$="btnGetUserStories"]').prop('disabled', false);
+
+                }
+                
+                $copado( document ).ready(function() {
+                    copadoStreamingService.ns = '{!JSENCODE(namespace)}';
+                    copadoStreamingService.init();
+                    statusManager.ns = '{!JSENCODE(namespace)}';
+                    statusManager.herokuServer = '{!JSENCODE(herokuServer)}';
+                    statusManager.urlParameters = '{!JSENCODE(urlParameters)}';
+                    statusManager.sessionId = __sfdcSessionId;
+                    statusManager.parentId = '{!JSENCODE(Promotion__c.Id)}';
+                    statusManager.waitTimeout = 10000;
+                    statusManager.initFunction = function(){};
+                    statusManager.successFunction = function(){ copadoApp.callComplete(); };
+
+                    setTimeout(function(){
+                      statusManager.initialise();
+                    },2000);
+                    var body = document.getElementsByTagName('body')[0];
+                    body.addEventListener("beforeunload", function(){
+                        copadoStreamingService.unload();
+                     });
+                });
+            </script>
+            <script>
+                ga('send', 'pageview', {
+                  'page': '/PromoteChanges',
+                  'title': 'Promote Changes'
+                });
+            </script>
+
+            <c:CheckFeaturesComponent />
+        </div>
+    </html>
+</apex:page>

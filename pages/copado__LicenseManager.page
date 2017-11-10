@@ -1,0 +1,159 @@
+<apex:page showHeader="true" sidebar="false" controller="copado.LicenseManagerController" id="thePage" >
+	<head>
+		<apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+		<apex:stylesheet value="{!URLFOR($Resource.copado__Statics,'css/wizard.css')}" />
+		<script> 
+		var $copado = jQuery.noConflict(); 
+
+		function changeLookUpType(type){
+			$copado("[id$=userInput_lktp]").val(type);
+		}
+
+		</script>
+	</head>
+
+	<c:ScreenLocker id="screenLocker" msg="{!$Label.copado__loading}" />
+
+	<apex:sectionHeader title="Copado" subtitle="{!$Label.copado__license_manager}" />
+
+	<apex:form id="theForm">
+		<apex:pageMessage severity="INFO" strength="3" title="{!$Label.copado__license_manager_deactivated}" summary="{!$Label.copado__license_manager_inactive_descripton}" rendered="{!NOT(enableMultiLicenses)}"/>
+
+		<apex:actionStatus id="status" onstart="lockScreen();" onstop="unlockScreen();" />
+
+		<apex:outputPanel layout="block" styleClass="fixedMsg" id="msg">
+    		<apex:pageMessages id="theMessages" />
+    		<script>
+    			setTimeout(function(){$copado('.fixedMsg').fadeOut('slow');},10000);
+    		</script>
+		</apex:outputPanel>
+		
+
+		<apex:pageBlock id="pbInit" rendered="{!initRun==false}">
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton id="btnGetLicenseInfo" value="{!$Label.copado__get_license_information}" action="{!init}" status="status" reRender="theForm" />
+			</apex:pageBlockButtons>
+			{!$Label.copado__license_manager_introduction}
+		</apex:pageBlock>
+
+		<apex:outputPanel rendered="{!enableMultiLicenses}">
+			<apex:pageBlock id="pbMain" mode="edit" rendered="{!initRun}">
+				<apex:pageBlockSection columns="1">
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="{!$Label.copado__copado_licenses_used}" />
+						<apex:outputText id="txtCopadoLicenses" value="{!copadoLicensesUsed}/{!copadoLicensesAvailable}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="{!$Label.copado__ccm_licenses_used}" />
+						<apex:outputText id="txtCCMlicenses" value="{!CCMLicensesUsed}/{!CCMLicensesAvailable}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem > <!-- CAD AVAILABLE LICENSES -->
+						<apex:outputLabel value="{!$Label.copado__cad_licenses_used}" />
+						<apex:outputText id="txtCADlicenses" value="{!CADLicensesUsed}/{!CADLicensesAvailable}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="{!$Label.copado__cst_licenses_used}" />
+						<apex:outputText id="txtCSTlicenses" value="{!CSTLicensesUsed}/{!CSTLicensesAvailable}" />
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+
+				<apex:pageBlockSection columns="1" title="{!$Label.copado__add_update_user}" collapsible="false">
+
+                    <apex:pageBlockSectionItem >    <!--USER LICENSE TYPE PICKLIST -->
+                    	<apex:outputLabel >User</apex:outputLabel>
+                    	<apex:outputPanel layout="block">
+                    		<apex:selectList title="User License Type" label="User" size="1" multiselect="false" onchange="changeLookUpType(this.value);" >
+            					<apex:selectOptions value="{!licenseTypes}"/> 
+        					</apex:selectList>
+        					<apex:inputField value="{!dummyUser.ManagerId}" id="userInput"/>
+        				</apex:outputPanel>
+        			</apex:pageBlockSectionItem>
+
+					<apex:pageBlockSectionItem helpText="Copado = Copado Enterprise">
+						<apex:outputLabel value="{!$Label.copado__assign_copado_license}" />
+						<apex:inputCheckbox id="chkAssignCopado" value="{!assignCopado}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem helpText="CCM = Copado Change Management" rendered="{!enableMultiLicenses}">
+						<apex:outputLabel value="{!$Label.copado__assign_ccm_license}" />
+						<apex:inputCheckbox id="chkAssignCCM" value="{!assignCCM}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem helpText="CST = Copado Selenium Testing" rendered="{!enableMultiLicenses}">
+						<apex:outputLabel value="{!$Label.copado__assign_cst_license}" />
+						<apex:inputCheckbox id="chkAssignCST" value="{!assignCST}" />
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem helpText="CAD = Copado Agile Delivery" rendered="{!enableMultiLicenses}">
+						<apex:outputLabel value="{!$Label.copado__assign_cad_license}" />  <!-- ASSIGNE CAD LICENSE-->
+						<apex:inputCheckbox id="chkAssignCAD" value="{!assignCAD}" />
+					</apex:pageBlockSectionItem>					
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="" />
+						<apex:commandButton id="btnAddUser" value="{!$Label.copado__add_update_user}" action="{!addUser}" reRender="theForm" status="status" />
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+			</apex:pageBlock>
+			<apex:pageBlock id="pbTables" title="{!$Label.copado__assigned_users}" mode="edit" rendered="{!initRun}">
+				<apex:pageBlockSection title="{!$Label.copado__copado_users}" columns="1" collapsible="false" id="pbsCopado">
+					<apex:pageBlockTable value="{!copadoUsage}" var="row" id="tblCopadoUsage">
+						<apex:column width="100">
+							<apex:facet name="header">{!$Label.copado__action_column_header}</apex:facet>
+							<apex:outputPanel >
+								<apex:commandLink id="lnkCopadoRemove" value="{!$Label.copado__remove}" action="{!row.removeAssignment}"  reRender="theForm" status="status" />
+							</apex:outputPanel>
+						</apex:column>
+						<apex:column >
+							<apex:facet name="header">{!$Label.copado__name}</apex:facet>
+							<apex:outputText id="txtCopadoUserName" value="{!row.license.SetupOwner.Name}" />
+						</apex:column>
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+
+				<apex:pageBlockSection title="{!$Label.copado__ccm_users}" columns="1" collapsible="false" id="pbsCCM">
+					<apex:pageBlockTable value="{!ccmUsage}" var="row" id="tblCCMUsage">
+						<apex:column width="100">
+							<apex:facet name="header">{!$Label.copado__action_column_header}</apex:facet>
+							<apex:outputPanel >
+								<apex:commandLink id="lnkCCMRemove" value="{!$Label.copado__remove}" action="{!row.removeAssignment}" reRender="theForm" status="status" />
+							</apex:outputPanel>
+						</apex:column>
+						<apex:column >
+							<apex:facet name="header">{!$Label.copado__name}</apex:facet>
+							<apex:outputText id="txtCCMUserName" value="{!row.license.SetupOwner.Name}" />
+						</apex:column>
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+				<!--CAD USERS************************************************************+ DIV-->	
+				<apex:pageBlockSection title="{!$Label.copado__cad_users}" columns="1" collapsible="false" id="pbsCAD">
+					<apex:pageBlockTable value="{!cadUsage}" var="row" id="tblCCMUsage">
+						<apex:column width="100">
+							<apex:facet name="header">{!$Label.copado__action_column_header}</apex:facet>
+							<apex:outputPanel >
+								<apex:commandLink id="lnkCADRemove" value="{!$Label.copado__remove}" action="{!row.removeAssignment}" reRender="theForm" status="status" />
+							</apex:outputPanel>
+						</apex:column>
+						<apex:column >
+							<apex:facet name="header">{!$Label.copado__name}</apex:facet>
+							<apex:outputText id="txtCADUserName" value="{!row.license.SetupOwner.Name}" />
+						</apex:column>
+					</apex:pageBlockTable>
+				</apex:pageBlockSection>
+				<!--CAD USERS************************************************************+ DIV-->	
+
+                <apex:pageBlockSection title="{!$Label.copado__cst_users}" columns="1" collapsible="false" id="pbsCST">
+                    <apex:pageBlockTable value="{!cstUsage}" var="row" id="tblCSTUsage">
+                        <apex:column width="100">
+                            <apex:facet name="header">{!$Label.copado__action_column_header}</apex:facet>
+                            <apex:outputPanel >
+                                <apex:commandLink id="lnkCSTRemove" value="{!$Label.copado__remove}" action="{!row.removeAssignment}" reRender="theForm" status="status" />
+                            </apex:outputPanel>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__name}</apex:facet>
+                            <apex:outputText id="txtCSTUserName" value="{!row.license.SetupOwner.Name}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+		</apex:outputPanel>
+	</apex:form>
+	<c:CheckFeaturesComponent />
+</apex:page>

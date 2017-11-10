@@ -1,0 +1,15 @@
+<apex:page id="thePage" showHeader="false" sidebar="false" standardController="copado__User_Story__c" extensions="copado.UserStoryApexTestResultsExtension,copado.Settings">
+    <c:GAnalytics />
+    <c:WizardUtils />
+    <apex:form id="theForm" >
+        <!--apex:pageMessages /-->
+        <c:ApexTestResult id="ApexTestResults" attachmentId="{!attId}" orgId="{!copado__User_Story__c.copado__Org_Credential__c}" userStoryId="{!copado__User_Story__c.Id}" minCodeCoverage="{!copado__User_Story__c.copado__Minimum_Apex_Code_Coverage__c}" userStory="{!copado__User_Story__c}"/>
+    </apex:form>
+    <script>
+        ga('send', 'pageview', {
+          'page': '/UserStoryApexTestResults',
+          'title': 'User Story Apex Test Results'
+        });
+    var Copado_Licenses = {!CurrentUserLicenses};     
+    </script>
+</apex:page>

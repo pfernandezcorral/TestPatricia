@@ -1,0 +1,119 @@
+<apex:page controller="copado.appHome" action="{!init}" title="{!$Label.copado__account_summary}" standardStylesheets="true" sidebar="false" showHeader="true" id="thePage" cache="false">
+    <c:GAnalytics />    
+    <apex:pageMessages id="theMessages" />
+    
+    <apex:sectionHeader id="theHeader" title="Copado" subtitle="{!$Label.copado__account_summary}" />
+    
+    <apex:form id="theForm" >     
+        <c:credits id="cmp_credits" />
+        <style>
+            .activeTab { background-color: #236FBD; color:white; background-image:none}
+            .inactiveTab { background-color: lightgrey; color:black; background-image:none}
+        </style>
+        <apex:tabPanel switchType="client" selectedTab="transactions" id="theTabPanel"
+            tabClass="activeTab" inactiveTabClass="inactiveTab">
+            <apex:tab label="{!$Label.copado__transactions}" name="transactions" id="tabOne">
+                <apex:pageBlock id="pbTrans" title="{!$Label.copado__transactions}" helpUrl="http://docs.copa.do/copado/credit-usage" helpTitle="{!$Label.copado__help_for_this_page}">
+                    <apex:pageBlockTable value="{!transactions}" var="t">
+                        <apex:column >
+                            <apex:facet name="header">{!$ObjectType.User.Label}</apex:facet>
+                            <apex:outputText value="{!t.userName}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__date}</apex:facet>
+                            <apex:outputText value="{!t.ddate}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__credits}</apex:facet>
+                            <apex:outputText value="{!t.credits}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$ObjectType.copado__Selenium_Test_Result__c.fields.copado__Elapsed_Time_Seconds__c.Label}</apex:facet>
+                            <apex:outputText value="{0, number, ####,##0}">
+                                <apex:param value="{!t.minutes * 60}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__deployment}</apex:facet>
+                            <apex:outputText value="{!t.deployment}"/>
+                        </apex:column>                        
+                        <apex:column >
+                            <apex:facet name="header">{!$ObjectType.copado__Step__c.Fields.Name.label}</apex:facet>
+                            <apex:outputText value="{!t.stepName}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__deployment_job}</apex:facet>
+                            <apex:outputText value="{!t.job}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__destination_org}</apex:facet>
+                            <apex:outputText value="{!t.destinationOrg}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:tab>
+            <apex:tab label="{!$Label.copado__orders}" name="orders" id="tabTwo" rendered="true">
+                <apex:pageBlock id="pbOrders" title="{!$Label.copado__orders}" >
+                    <apex:pageBlockTable value="{!orders}" var="o">
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__date}</apex:facet>
+                            <apex:outputText value="{!o.ddate}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__credits}</apex:facet>
+                            <apex:outputText value="{!o.credits}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.copado__minutes}</apex:facet>
+                            <apex:outputText value="{0, number, ####,##0}">
+                                <apex:param value="{!o.minutes}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <!--
+                        <apex:column >
+                            <apex:facet name="header">{!$ObjectType.Opportunity.Fields.Amount.label}</apex:facet>
+                            <apex:outputText value="{!o.CurrencyIsoCode+' '+TEXT(o.amount)}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">{!$Label.PAYMENT_DETAILS}</apex:facet>
+                            <apex:outputText value="{!o.paymentDetails}"/>
+                        </apex:column>
+                        -->
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:tab>
+            <apex:tab label="{!$Label.copado__features}" name="t_features" id="tabThree" rendered="true">
+                <apex:pageBlock id="pbFeatures" title="{!$Label.copado__features}" >
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton action="{!syncFeatures}" value="{!$Label.copado__sync_features}"/>
+                    </apex:pageBlockButtons>
+                    <apex:pageBlockTable value="{!features}" var="f">
+                        <apex:column value="{!f.Name}"/>
+                        <apex:column value="{!f.copado__Enabled__c}"/>
+                        <apex:column value="{!f.copado__Quantity__c}"/>
+                        <apex:column value="{!f.copado__Expiration_Date__c}"/>
+                        <apex:column >
+                            <apex:outputLink rendered="{!!f.copado__Enabled__c || !isblank(f.copado__Expiration_Date__c)}" value="mailto:sales@copa.do">
+                                {!$Label.copado__contact_sales}
+                            </apex:outputLink>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:tab>
+            <apex:tab label="{!$Label.copado__api_key}" name="t_api_key" id="tabFour" rendered="true">
+                <apex:pageBlock id="pbAPIKey" title="{!$Label.copado__pesonal_api_key} {!$User.FirstName} {!$User.LastName}" >
+                    <apex:pageBlockButtons location="top">
+                        <apex:commandButton action="{!createAPIKey}" value="{!$Label.copado__create} / {!$Label.copado__reset}"/>
+                    </apex:pageBlockButtons>
+                    <apex:pageBlockSection >
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="{!$Label.copado__api_key}" for="api_key"/>
+                            <apex:outputText value="{!APIKey}" id="api_key"/> 
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+            </apex:tab>
+        </apex:tabPanel>
+    </apex:form>
+    <c:CheckFeaturesComponent />
+</apex:page>

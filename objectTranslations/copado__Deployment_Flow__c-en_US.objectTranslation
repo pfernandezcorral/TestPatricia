@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <label><!-- Active --></label>
+        <name>copado__Active__c</name>
+    </fields>
+    <fields>
+        <label><!-- Branch Management Coordinates --></label>
+        <name>copado__Branch_Management_Coordinates__c</name>
+    </fields>
+    <fields>
+        <label><!-- Disable Validations --></label>
+        <name>copado__Disable_Validations__c</name>
+    </fields>
+    <fields>
+        <label><!-- Enforce branch/env naming convention --></label>
+        <name>copado__Equal_Branch_Environment_Name__c</name>
+    </fields>
+    <fields>
+        <label><!-- Flow Step Coordinates --></label>
+        <name>copado__Flow_Step_Coordinates__c</name>
+    </fields>
+    <fields>
+        <label><!-- Git Repository --></label>
+        <name>copado__Git_Repository__c</name>
+        <relationshipLabel><!-- Deployment Flows --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Main Branch --></label>
+        <name>copado__Main_Branch__c</name>
+    </fields>
+    <fields>
+        <label><!-- Manage Branches --></label>
+        <name>copado__Manage_Branches__c</name>
+    </fields>
+    <fields>
+        <label><!-- Static Code Analysis Settings --></label>
+        <name>copado__Static_Code_Analysis_Settings__c</name>
+        <relationshipLabel><!-- Deployment Flows --></relationshipLabel>
+    </fields>
+    <webLinks>
+        <label><!-- Manage_Branches --></label>
+        <name>copado__Manage_Branches</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Manage_Environment_Variables --></label>
+        <name>copado__Manage_Environment_Variables</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Manage_Regression_Tests --></label>
+        <name>copado__Manage_Regression_Tests</name>
+    </webLinks>
+</CustomObjectTranslation>

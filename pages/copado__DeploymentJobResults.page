@@ -1,0 +1,70 @@
+<apex:page id="thePage" tabStyle="copado__Deployment__c" showHeader="false" sidebar="false">
+    <head>
+        <c:GAnalytics />
+    	<c:WizardUtils id="wizardUtils"></c:WizardUtils>
+        <script type="text/javascript">
+            var __sfdcSessionId = '{!GETSESSIONID()}';
+        </script>
+        <script src="/soap/ajax/36.0/connection.js"></script>
+        <apex:stylesheet value="{!URLFOR($Resource.copado__jqx,'jqwidgets/styles/jqx.base.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.copado__Statics,'css/screenLocker.css')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.copado__jqx,'jqwidgets/jqx-all.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.utilsV2) }"/>
+        <apex:includeScript value="{!URLFOR($Resource.JsRemoting) }" />
+        <apex:includeScript value="{!URLFOR($Resource.deploymentJobResults) }" />
+        <script> var $copado = jQuery.noConflict(); </script>
+    </head>
+    
+    <c:ScreenLocker id="screenLocker" msg="{!$Label.copado__loading}"></c:ScreenLocker>
+    
+    <div class="fixedMsg" tyle="display:none;" id="msg"> </div>
+    
+    <div style="display:none;">
+        <apex:pageMessage title="{!$Label.copado__warning}" summary="__MSG__" severity="warning" strength="3" id="js-msg-WARNING" />
+        <apex:pageMessage title="{!$Label.copado__success}" summary="__MSG__" severity="confirm" strength="3" id="js-msg-CONFIRM" />
+        <apex:pageMessage title="{!$Label.copado__error}" summary="__MSG__" severity="error" strength="3" id="js-msg-ERROR" />
+        <apex:pageMessage title="{!$Label.copado__info}" summary="__MSG__" severity="info" strength="3" id="js-msg-INFO" />
+    </div>
+    
+    <apex:sectionHeader id="theHeader" title="Copado" subtitle="Deployment Job Errors" />
+    
+    <apex:pageBlock id="bp">
+        <apex:pageBlockSection id="pbs">
+        	<apex:pageBlockSectionItem id="pbsi_stepName">
+            	<apex:outputLabel >{!$ObjectType.copado__Step__c.Fields.Name.Label}</apex:outputLabel>
+            	<div id="stepName"></div>
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem id="pbsi_orgName">
+            	<apex:outputLabel >{!$ObjectType.copado__Org__c.Fields.Name.Label}</apex:outputLabel>
+                <div id="orgName"></div>
+            </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection columns="1" >
+            <div id="stepResult">
+                <div id="jqxgrid">
+                    <div id="loading">
+                        <center>
+                            <img src="/img/loading.gif" /> <i>{!$Label.copado__loading}<span id="retry-label"></span></i>
+                        </center>
+                    </div>
+                </div>
+            </div>                
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    <script type="text/Javascript">
+        var jobId = utilsV2.getUrlParameter('jobId');
+        var deploymentId = utilsV2.getUrlParameter('deploymentId');
+        var stepName = utilsV2.getUrlParameter('stepName');
+        var orgName = utilsV2.getUrlParameter('orgName');
+    
+    	deploymentJobResults.labels.SELECTED = copadoLabels.selected;
+        deploymentJobResults.labels.LEVEL = copadoLabels.level;
+        deploymentJobResults.labels.MESSAGE = copadoLabels.MESSAGE;
+        deploymentJobResults.labels.COPADOTIP = copadoLabels.COPADO_TIP;
+        deploymentJobResults.labels.NO_STEP_RESULTS_FOUND = 'No results found.  Please note that this page does not support Manual Task results.';
+        deploymentJobResults.labels.MISSING_PARAMS = 'The deploymentId or jobId parameters were not found.';
+
+    	deploymentJobResults.init(deploymentId, jobId, stepName, orgName);
+    </script>
+</apex:page>

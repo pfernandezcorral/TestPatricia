@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <help><!-- the branch in the selected git repository. Usually &quot;master&quot;. --></help>
+        <label><!-- Branch --></label>
+        <name>copado__Branch__c</name>
+    </fields>
+    <fields>
+        <label><!-- Frequency --></label>
+        <name>copado__Frequency__c</name>
+        <picklistValues>
+            <masterLabel>Daily</masterLabel>
+            <translation><!-- Daily --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Monthly</masterLabel>
+            <translation><!-- Monthly --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>None</masterLabel>
+            <translation><!-- None --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Weekly</masterLabel>
+            <translation><!-- Weekly --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Git Repository --></label>
+        <name>copado__Git_Repository__c</name>
+        <relationshipLabel><!-- Git Snapshots --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Git Snapshot Permissions --></label>
+        <name>copado__Git_Snapshot_Permissions__c</name>
+        <picklistValues>
+            <masterLabel>Allow Commits Only</masterLabel>
+            <translation><!-- Allow Commits Only --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Allow Snapshots &amp; Commits</masterLabel>
+            <translation><!-- Allow Snapshots &amp; Commits --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Allow Snapshots Only</masterLabel>
+            <translation><!-- Allow Snapshots Only --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Last Snapshot --></label>
+        <name>copado__Last_Backup__c</name>
+    </fields>
+    <fields>
+        <help><!-- Empty means all types. Select one or more types to limit the backup only to selected items. --></help>
+        <label><!-- Metadata Types --></label>
+        <name>copado__Metadata_Types__c</name>
+    </fields>
+    <fields>
+        <label><!-- Org Credential --></label>
+        <name>copado__Org__c</name>
+        <relationshipLabel><!-- Git Snapshots --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- View in Git --></label>
+        <name>copado__View_in_Git__c</name>
+    </fields>
+</CustomObjectTranslation>

@@ -1,0 +1,143 @@
+<apex:page showHeader="true" sidebar="false" id="thePage" controller="copado.CopadoSetupController" > 
+<apex:pageMessages id="theMessages" />
+	<c:WizardUtils id="cmpWizardUtilities" />
+	<style>
+		.main {width:100%;}
+		.left {width:50%; float:left; margin-left:0px; }
+		.right {width:50%; float:right; margin-right:0px; }
+	</style>
+	<apex:sectionHeader id="theHeader" title="Copado" subtitle="{!$Label.copado__copado_setup_wizard_subtitle}" description="{!$Label.copado__copado_setup_wizard_description}"/>
+
+	
+	<head>
+		<script type="text/javascript">
+            var $copado = jQuery.noConflict(), 
+            __sfdcSessionId = '{!GETSESSIONID()}';
+        </script>
+        <script src="/soap/ajax/34.0/connection.js"></script>
+	</head>
+	<apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+	<script type="text/javascript">
+		var setup = {
+			ns: '{!JSEncode(namespace)}',
+			defaultType: '{!JSEncode(org0.Org_Type__c)}',
+			myInterval: null,
+			fixedOAuthUrl: '{!JSEncode(fixedOAuthUrl)}',
+
+			createOrg: function(){
+				var n = $copado('.js-org0-name').val();
+				
+				var org = new sforce.SObject(setup.ns+'Org__c');
+				org.Name = n;
+				org[setup.ns+'Org_Type__c'] = setup.defaultType;
+
+				var result = sforce.connection.create([org]);
+				if(result[0].getBoolean('success')){
+			        org.Id = result[0].id;
+				    setup.startMonitoring();
+					window.open(setup.fixedOAuthUrl.replace('__ORGIG__', org.Id),'_blank');
+				}else{
+				   alert(copadoLabels.EXCEPTION_OCCURRED_MESSAGE+'\n'+result);
+				}
+				return false;
+   
+			},
+			queryThisOrg: function(){
+				try{
+					var result = sforce.connection.query("Select Id, "+setup.ns+"SFDC_Org_ID__c from "+setup.ns+"Org__c where "+setup.ns+"SFDC_Org_ID__c='{!$Organization.Id}_{!$User.Id}' limit 1");
+	                records = result.getArray("records");
+	                console.log(records);
+	                return records.length;
+				}
+				catch(e){
+					console.error('Query org exception: ', e);
+					if(e.detail.UnexpectedErrorFault && e.detail.UnexpectedErrorFault.exceptionCode=='INVALID_SESSION_ID'){
+						window.location.reload();
+					}
+					return false;
+				}
+			},
+			displaySuccess: function(){
+				console.info('SUCCESS: Org Credential has been validated...');
+				$copado('#thisOrg_success').show();
+				$copado('.js-submitThisOrg').hide();
+				rerenderConfirm();
+			},
+			startMonitoring: function(){
+				console.log('Starting monitoring...');
+				setup.myInterval = setup.myInterval || setInterval(function(){
+					if(setup.queryThisOrg()){
+						console.info('Org Credential found: Stopping monitoring.');
+						setup.displaySuccess();
+						clearInterval(setup.myInterval);
+					}
+				}, 3000);
+			}
+		};
+	</script>
+
+
+	<apex:form id="theForm" rendered="{!AND(!showError,showOptions)}">
+
+		<apex:pageBlock id="pb" title="" mode="edit">
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton value="{!$Label.copado__im_done}" action="{!imdone}"/>
+			</apex:pageBlockButtons>
+
+			<apex:pageBlockSection title="{!$Label.copado__copado_org_setup}" columns="1" rendered="{!NOT(hasThisOrg)}">
+				<p>{!$Label.copado__copado_org_setup_description}</p>
+				<apex:inputField value="{!org0.Name}" styleClass="js-org0-name" />
+				<apex:outputField value="{!org0.copado__Org_Type__c}" id="js-org0-type" />
+				<apex:pageMessage severity="INFO" strength="2" title="{!$Label.copado__attention_required}">
+				{!$Label.COPADO_ORG_SETUP_TIP_STEP_1}   <br />
+
+				<ul>
+				  <li>{!$Label.COPADO_ORG_SETUP_ORG_ID} {!$Organization.Id} </li>
+				  <li>{!$Label.COPADO_ORG_SETUP_ORG_NAME} {!$Organization.Name} </li>
+				  <li>{!$Label.COPADO_ORG_SETUP_ORG_USERNAME} {!$User.Username} </li>
+				  <li>{!$Label.COPADO_ORG_SETUP_ORG_FULLNAME} {!$User.FirstName} {!$User.LastName}  </li>
+				</ul>  				
+				{!$Label.COPADO_ORG_SETUP_TIP_STEP_2}
+				</apex:pageMessage>
+				<apex:pageMessage id="msgPopBlock" severity="WARNING" strength="2" summary="{!$Label.copado__popup_blocker_message}" />
+				<apex:pageBlockSectionItem >
+					<apex:outputPanel ></apex:outputPanel>
+					<apex:outputPanel >
+						<input type="button" class="btn js-submitThisOrg" value="{!$Label.ADD_OAUTH}" onclick="setup.createOrg();return false;"/>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:actionFunction name="rerenderConfirm" action="{!rerenderOrg}" />
+			</apex:pageBlockSection>
+			<apex:pageBlockSection columns="1" title="{!$Label.copado__create_org_credential_title}" rendered="{!hasThisOrg && !hasOrgs}">
+				<apex:outputPanel id="pnlOrgsDescriptions">
+					<p>{!$Label.CREATE_ORG_CREDENTIAL_DESCRIPTION}</p>
+					<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.Org__c.Label}" onclick="window.open('{!URLFOR($Action.Org__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.Org__c.Label}</button>
+				</apex:outputPanel>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection id="pbsGitRepoSetup" title="{!$Label.copado__create_git_repository_title}" columns="1" rendered="{!hasThisOrg && isCopadoUser && !hasRepos}">
+				<p>{!$Label.CREATE_GIT_REPOSITORY_DESCRIPTION}</p><br />
+				<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.Git_Repository__c.Label}" onclick="window.open('{!URLFOR($Action.Git_Repository__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.Git_Repository__c.Label}</button>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection id="pbsDeployment" title="{!$Label.copado__create_deployment_title}" columns="1" rendered="{!hasThisOrg && isCopadoUser && !hasDeployments}">
+				<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.Deployment__c.Label}" onclick="window.open('{!URLFOR($Action.Deployment__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.Deployment__c.Label}</button>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection id="pbsGitSnapshotSetup" title="{!$Label.copado__create_git_snapshot_title}" rendered="{!hasThisOrg && isCopadoUser && !hasSnapshots}">
+				<p>{!$Label.CREATE_GIT_SNAPSHOT_DESCRIPTION}</p><br />
+				<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.Git_Backup__c.Label}" onclick="window.open('{!URLFOR($Action.Git_Backup__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.Git_Backup__c.Label}</button>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection id="pbsOrgDiffSetup" title="{!$Label.copado__create_org_difference_title}" rendered="{!AND(allowOrgDiff, isCopadoUser,hasThisOrg, !hasOrgDiffs)}" columns="1">
+				<p>{!$Label.CREATE_ORG_DIFFERENCE_DESCRIPTION}</p><br />
+				<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.OrgDiff__c.Label}" onclick="window.open('{!URLFOR($Action.OrgDiff__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.OrgDiff__c.Label}</button>
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection id="pbsSnapshotDiffSetup" title="{!$Label.copado__create_snapshot_difference_title}" rendered="{!AND(allowSnapshotDiffs, isCopadoUser, hasThisOrg, !hasSnapshotDiffs)}" columns="1">
+				<p>{!$Label.CREATE_SNAPSHOT_DIFFERENCE_DESCRIPTION}</p><br />
+				<button type="button" class="btn" formtarget="_blank" value="{!$Label.NEW} {!$ObjectType.Snapshot_Difference__c.Label}" onclick="window.open('{!URLFOR($Action.Snapshot_Difference__c.New)}');" style="width:200px;" >{!$Label.NEW} {!$ObjectType.Snapshot_Difference__c.Label}</button>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

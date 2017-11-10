@@ -1,0 +1,1272 @@
+<apex:page standardController="copado__Sprint__c" extensions="copado.SprintVirtualWall" showHeader="{!!isLightning}"  sidebar="false" applyHtmlTag="{!!isLightning}" applyBodyTag="false" docType="html-5.0">
+  <html
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+    <apex:stylesheet value="{!URLFOR($Resource.copado__SLDS, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+    <apex:slds />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+    <div class="slds-scope" >
+      <div class="slds-page-header">
+        <div class="slds-grid">
+          <div class="slds-col slds-has-flexi-truncate">
+            <div class="slds-media slds-no-space slds-grow">
+              <div class="slds-media__figure">
+                <span class="slds-icon_container slds-icon-standard-opportunity">
+                  <svg class="slds-icon slds-icon-custom-95" aria-hidden="true" >
+                    <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/custom-sprite/svg/symbols.svg#custom95')}"></use>
+                  </svg>
+                </span>
+              </div>
+              <div class="slds-media__body">
+                <p class="slds-text-body_small slds-line-height_reset" style="padding-bottom: 2px;">
+            {!sw.theSprint.Name}
+            </p>
+                <div class="slds-grid">
+                  <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="{!$label.SprintWall_Header}" style="margin-right: 10px;">{!$label.SprintWall_Header}</h1>
+                  <div class="slds-col slds-shrink-none slds-align-bottom">
+                    <div class="slds-grid">
+                      <div class="slds-col">
+                        <button aria-haspopup="true" class="slds-button slds-button--icon-more slds-shrink-none" id="pageSettings" >
+                          <svg aria-hidden="true" class="slds-button__icon">
+                            <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#settings')}"></use>
+                          </svg>
+                          <span class="slds-assistive-text">Settings</span>
+                          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--x-small">
+                            <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="slds-col">
+                        <h1>{!$label.SprintWall_Actual_Velocity}</h1>
+                        <h2 style="font-weight: bolder;">
+                          <apex:outputText value="{!actualVelocity}" id="actualVelocity"/>
+                        </h2>
+                      </div>
+                      <div class="slds-col">
+                        <h1>{!$Label.copado__sprintwall_planned_velocity}</h1>
+                        <h2 style="font-weight: bolder;">
+                          <apex:outputText value="{!plannedVelocity}" id="plannedVelocity"/>
+                        </h2>
+                      </div>
+                      <div class="slds-col">
+                        <h1>{!$Label.copado__sprintwall_days_left}</h1>
+                        <h2 style="font-weight: bolder;">
+                          <apex:outputText value="{!daysLeft}" id="daysLeftText"/>
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="slds-dropdown slds-dropdown--nubbin-top slds-dropdown--small slds-dropdown--menu" id="menu_page_settings" style="display: none;">
+                    <ul class="slds-dropdown__list" role="menu">
+                      <li class="slds-dropdown__item" href="#" role="menuitem option">
+                        <a href="/{!sw.theSprint.Id}?nooverride=1">{!$Label.copado__sprintwall_days_left_view_sprint}</a>
+                      </li>
+                      <li class="slds-dropdown__item" href="#" role="menuitem option">
+                        <a href="{!if(isLightning,'/'+sw.theSprint.Id+'/e','/'+sw.theSprint.Id+'/e?retURL=%2F'+sw.theSprint.Id)}">
+                  {!$Label.copado__sprintwall_edit_sprint}</a>
+                      </li>
+                      <li class="slds-dropdown__item" href="#" role="menuitem option">
+                        <a href="/{!$ObjectType.copado__Sprint__c.keyPrefix}">{!$Label.copado__sprintwall_all_sprints}</a>
+                      </li>
+                      <apex:outputPanel layout="block" rendered="{!AND(previousSprintId!= null,previousSprintId != '')}" >
+                        <li class="slds-dropdown__item" href="#" role="menuitem option">
+                          <a href="/{!previousSprintId}">{!$Label.copado__sprintwall_previous_sprint}</a>
+                        </li>
+                      </apex:outputPanel>
+                      <apex:outputPanel layout="block" rendered="{!AND(nextSprintId!= null,nextSprintId != '')}" >
+                        <li class="slds-dropdown__item" href="#" role="menuitem option">
+                          <a href="/{!nextSprintId}">{!$Label.copado__sprintwall_next_sprint}</a>
+                        </li>
+                      </apex:outputPanel>
+                    </ul>
+                  </div>
+                  <script>
+              $copado = jQuery.noConflict();
+              $copado(function() {
+                  var pageSettingsDropdown = $copado('#menu_page_settings').hide();
+                  $copado('#pageSettings').click(function(event) {
+                      if (pageSettingsDropdown.is(':visible')) {
+                       hide_dd();
+                       return false;
+                      }
+                      pageSettingsDropdown.data('active-button', this);
+                      pageSettingsDropdown.show();
+                      pageSettingsDropdown.position({
+                         my:"center top",
+                         at:"center bottom",
+                         of:this,
+                         offset:"0px 10px",
+                         collision:"fit"
+                       });
+                      $copado(document).click(hide_dd);
+                      return false;
+                  });
+              });
+              </script>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slds-col slds-no-flex slds-grid slds-align-top">
+            <div class="slds-button-group" role="group">
+              <apex:outputPanel layout="block" id="loadingImage" Styleclass="demo-only" style="width: 50px; display: none;">
+                <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand" style="position: relative;">      
+                  <div class="slds-spinner__dot-a"></div>
+                  <div class="slds-spinner__dot-b"></div>
+                </div>
+              </apex:outputPanel>
+              <button class="slds-button slds-button_neutral" onclick="OpenNewUserStoryModal();return false;">{!$label.SprintWall_Button_New_US}</button>
+              <button class="slds-button slds-button_neutral" onclick="OpenMassUpdateModal(); return false;">{!$label.SprintWall_Button_MassUpdate}</button>
+            </div>
+            <div class="slds-col slds-no-flex slds-align-bottom slds-m-left--small">
+              <div class="slds-button-group" role="group">
+                <button class="slds-button slds-button--icon-border" id="fullWorkView" onclick="openfullWorkView();">
+                  <svg aria-hidden="true" class="slds-button__icon">
+                    <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#snippet')}"></use>
+                  </svg>      
+                </button>
+                <button class="slds-button slds-button--icon-border slds-is-selected" id="compactWorkView" onclick="openContactWorkView();">
+                  <svg aria-hidden="true" class="slds-button__icon">
+                    <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#rows')}"></use>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="slds-col slds-no-flex slds-align-bottom slds-m-left--small">
+              <div class="slds-button-group" role="group">
+                <apex:outputPanel rendered="{!isChatterEnabled}" layout="block">
+                  <button class="slds-button slds-button--icon-border" id="buttonCharts" onclick="toggleChatter();return false;">
+                    <svg aria-hidden="true" class="slds-button__icon">
+                      <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#chat')}"></use>
+                    </svg>                    
+                  </button>
+                </apex:outputPanel>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <apex:outputPanel id="sprint_Content" layout="block">
+        <apex:outputPanel id="theMessages" layout="block" >
+          <apex:outputPanel layout="block" rendered="{!ErrorMessage != ''}"   styleclass="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" html-role="alert">            
+            <span class="slds-icon_container slds-icon-utility-ban slds-m-right_x-small" title="Description of icon when needed"></span>
+            <h2>{!ErrorMessage}</h2>
+          </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:form id="theForm" >
+          <apex:outputPanel id="sprint_leftpanel" layout="block">
+            <table id="mainTable" class="slds-table slds-table_edit slds-table_bordered slds-table_fixed-layout slds-table_resizable-cols slds-no-cell-focus" role="grid">
+              <thead>
+                <tr class="slds-line-height_reset" >
+                  <th scope="col"  class="slds-has-focus" style="width: 30px;" onclick="sortGiven(this,true);" >
+                    <div class="slds-th__action" id="sortImage" title="Sorting Enabled">
+                      <img src="data:image/svg+xml;utf8;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pgo8IS0tIEdlbmVyYXRvcjogQWRvYmUgSWxsdXN0cmF0b3IgMTkuMC4wLCBTVkcgRXhwb3J0IFBsdWctSW4gLiBTVkcgVmVyc2lvbjogNi4wMCBCdWlsZCAwKSAgLS0+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeD0iMHB4IiB5PSIwcHgiIHZpZXdCb3g9IjAgMCA0ODguOCA0ODguOCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDg4LjggNDg4Ljg7IiB4bWw6c3BhY2U9InByZXNlcnZlIiB3aWR0aD0iNTEycHgiIGhlaWdodD0iNTEycHgiPgo8Zz4KCTxnPgoJCTxyZWN0IGlkPSJYTUxJRF8zOTNfIiB4PSI4MS42NSIgeT0iMzYyIiBzdHlsZT0iZmlsbDojM0M5MkNBOyIgd2lkdGg9IjExNy42IiBoZWlnaHQ9IjExNy42Ii8+CgkJPHBhdGggZD0iTTQwNy4wNSw1Ni44aC0xMjcuM2wyMS44LTIxLjhjMy41LTMuNSwzLjUtOS4zLDAtMTIuOHMtOS4zLTMuNS0xMi44LDBsLTM3LjMsMzcuMmMtMy41LDMuNS0zLjUsOS4zLDAsMTIuOGwzNy4zLDM3LjMgICAgYzEuOCwxLjgsNC4xLDIuNyw2LjQsMi43czQuNi0wLjksNi40LTIuN2MzLjUtMy41LDMuNS05LjMsMC0xMi44bC0yMS44LTIxLjhoMTE4LjJ2MzM2LjloLTE4OS42di00OS43YzAtNS00LjEtOS4xLTkuMS05LjFIODEuNjUgICAgYy01LDAtOS4xLDQuMS05LjEsOS4xdjExNy42YzAsNSw0LjEsOS4xLDkuMSw5LjFoMTE3LjZjNSwwLDkuMS00LjEsOS4xLTkuMVY0MzBoMTk4LjhjNSwwLDkuMS00LjEsOS4xLTkuMXYtMzU1ICAgIEM0MTYuMTUsNjAuOCw0MTIuMDUsNTYuOCw0MDcuMDUsNTYuOHogTTE5MC4xNSw0NzAuNmgtOTkuNXYtOTkuNWg5OS41VjQ3MC42eiIvPgoJCTxwYXRoIGQ9Ik03Mi41NSwxODUuNnYxMTcuNmMwLDUsNC4xLDkuMSw5LjEsOS4xaDExNy42YzUsMCw5LjEtNC4xLDkuMS05LjFWMTg1LjZjMC01LTQuMS05LjEtOS4xLTkuMUg4MS42NSAgICBDNzYuNjUsMTc2LjUsNzIuNTUsMTgwLjYsNzIuNTUsMTg1LjZ6IE05MC42NSwxOTQuN2g5OS41djk5LjVoLTk5LjVDOTAuNjUsMjk0LjIsOTAuNjUsMTk0LjcsOTAuNjUsMTk0Ljd6Ii8+CgkJPGc+CgkJCTxwYXRoIGQ9Ik0xOTkuMjUsMTE3LjdjLTIuNCwwLTQuNywxLTYuNCwyLjdzLTIuNyw0LTIuNyw2LjRzMSw0LjcsMi43LDYuNHM0LDIuNyw2LjQsMi43czQuNy0xLDYuNC0yLjdzMi43LTQsMi43LTYuNCAgICAgcy0xLTQuNy0yLjctNi40QzIwMy45NSwxMTguNywyMDEuNjUsMTE3LjcsMTk5LjI1LDExNy43eiIvPgoJCQk8cGF0aCBkPSJNMTY5Ljg1LDExNy43Yy01LDAtOS4xLDQuMS05LjEsOS4xYzAsNSw0LDkuMSw5LjEsOS4xYzUsMCw5LjEtNC4xLDkuMS05LjFDMTc4Ljk1LDEyMS44LDE3NC44NSwxMTcuNywxNjkuODUsMTE3Ljd6Ii8+CgkJCTxwYXRoIGQ9Ik0xMTEuMDUsMTE3LjdjLTUsMC05LjEsNC4xLTkuMSw5LjFjMCw1LDQuMSw5LjEsOS4xLDkuMXM5LjEtNC4xLDkuMS05LjFDMTIwLjA1LDEyMS44LDExNi4wNSwxMTcuNywxMTEuMDUsMTE3Ljd6Ii8+CgkJCTxwYXRoIGQ9Ik0xNDAuNDUsMTE3LjdjLTUsMC05LjEsNC4xLTkuMSw5LjFjMCw1LDQsOS4xLDkuMSw5LjFjNSwwLDkuMS00LjEsOS4xLTkuMUMxNDkuNDUsMTIxLjgsMTQ1LjQ1LDExNy43LDE0MC40NSwxMTcuN3oiLz4KCQkJPHBhdGggZD0iTTgxLjY1LDExNy43Yy0yLjQsMC00LjcsMS02LjQsMi43Yy0xLjcsMS43LTIuNyw0LTIuNyw2LjRzMSw0LjcsMi43LDYuNHM0LDIuNyw2LjQsMi43czQuNy0xLDYuNC0yLjcgICAgIGMxLjctMS43LDIuNy00LDIuNy02LjRzLTEtNC43LTIuNy02LjRDODYuMzUsMTE4LjcsODQuMDUsMTE3LjcsODEuNjUsMTE3Ljd6Ii8+CgkJCTxwYXRoIGQ9Ik04MS42NSw4OC4zYy01LDAtOS4xLDQtOS4xLDkuMWMwLDUsNC4xLDkuMSw5LjEsOS4xczkuMS00LjEsOS4xLTkuMUM5MC42NSw5Mi40LDg2LjY1LDg4LjMsODEuNjUsODguM3oiLz4KCQkJPHBhdGggZD0iTTgxLjY1LDI5LjVjLTUsMC05LjEsNC4xLTkuMSw5LjFzNC4xLDkuMSw5LjEsOS4xczkuMS00LjEsOS4xLTkuMUM5MC42NSwzMy41LDg2LjY1LDI5LjUsODEuNjUsMjkuNXoiLz4KCQkJPHBhdGggZD0iTTgxLjY1LDU4LjljLTUsMC05LjEsNC05LjEsOXM0LjEsOS4xLDkuMSw5LjFzOS4xLTQuMSw5LjEtOS4xQzkwLjY1LDYzLDg2LjY1LDU4LjksODEuNjUsNTguOXoiLz4KCQkJPHBhdGggZD0iTTgxLjY1LDAuMWMtMi40LDAtNC43LDEtNi40LDIuN2MtMS43LDEuNy0yLjcsNC0yLjcsNi40czEsNC43LDIuNyw2LjRzNCwyLjcsNi40LDIuN3M0LjctMSw2LjQtMi43ICAgICBjMS43LTEuNywyLjYtNCwyLjYtNi40cy0xLTQuNy0yLjctNi40Qzg2LjM1LDEuMSw4My45NSwwLjEsODEuNjUsMC4xeiIvPgoJCQk8cGF0aCBkPSJNMTY5Ljg1LDAuMWMtNSwwLTkuMSw0LTkuMSw5LjFjMCw1LDQsOS4xLDkuMSw5LjFjNSwwLDkuMS00LjEsOS4xLTkuMUMxNzguOTUsNC4xLDE3NC44NSwwLjEsMTY5Ljg1LDAuMXoiLz4KCQkJPHBhdGggZD0iTTExMS4wNSwwLjFjLTUsMC05LjEsNC05LjEsOS4xYzAsNSw0LDkuMSw5LjEsOS4xYzUsMCw5LjEtNC4xLDkuMS05LjFDMTIwLjA1LDQuMSwxMTYuMDUsMC4xLDExMS4wNSwwLjF6Ii8+CgkJCTxwYXRoIGQ9Ik0xNDAuNDUsMC4xYy01LDAtOS4xLDQtOS4xLDkuMWMwLDUsNCw5LjEsOS4xLDkuMWM1LDAsOS4xLTQuMSw5LjEtOS4xQzE0OS40NSw0LjEsMTQ1LjQ1LDAuMSwxNDAuNDUsMC4xeiIvPgoJCQk8cGF0aCBkPSJNMTk5LjI1LDE4LjJjMi40LDAsNC43LTEsNi40LTIuN3MyLjctNCwyLjctNi40cy0xLTQuNy0yLjctNi40cy00LTIuNy02LjQtMi43cy00LjcsMS02LjQsMi43cy0yLjcsNC0yLjcsNi40ICAgICBzMSw0LjcsMi43LDYuNEMxOTQuNTUsMTcuMywxOTYuODUsMTguMiwxOTkuMjUsMTguMnoiLz4KCQkJPHBhdGggZD0iTTE5OS4yNSw4OC4zYy01LDAtOS4xLDQtOS4xLDlzNCw5LjEsOS4xLDkuMWM1LDAsOS4xLTQuMSw5LjEtOS4xQzIwOC4zNSw5Mi40LDIwNC4yNSw4OC4zLDE5OS4yNSw4OC4zeiIvPgoJCQk8cGF0aCBkPSJNMTk5LjI1LDI5LjVjLTUsMC05LjEsNC4xLTkuMSw5LjFzNCw5LjEsOS4xLDkuMWM1LDAsOS4xLTQuMSw5LjEtOS4xQzIwOC4zNSwzMy41LDIwNC4yNSwyOS41LDE5OS4yNSwyOS41eiIvPgoJCQk8cGF0aCBkPSJNMTk5LjI1LDU4LjljLTUsMC05LjEsNC05LjEsOS4xYzAsNSw0LDkuMSw5LjEsOS4xYzUsMCw5LjEtNC4xLDkuMS05LjFTMjA0LjI1LDU4LjksMTk5LjI1LDU4Ljl6Ii8+CgkJPC9nPgoJPC9nPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+CjxnPgo8L2c+Cjwvc3ZnPgo=" />
+                    </div>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>                    
+                  </th>
+                  <th scope="col" style="width: 30px;text-align: center;">
+                    <div class="slds-th__action slds-th__action_form">
+                      <label class="slds-checkbox">
+                        <input name="options" tabindex="-1" value="on" type="checkbox" onclick="selectAll();" id="selectAllCheckbox" />
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-assistive-text">Select All</span>
+                      </label>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>                      
+                    </div>
+                  </th>
+                  <th id="nameHeader" style="width: 95px;" onclick="sortGiven(this,false);" class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col">
+                    <a class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate" >{!$label.SprintWall_Name_Header}</span>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable">
+                      <label for="cell-resize-handle-2" class="slds-assistive-text">Account Name column width</label>
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-2" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th  onclick="sortGiven(this,false);" style="width: 100px;" class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" >
+                    <a id="typeHeader"  class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate">{!$label.SprintWall_Header_Type}</span>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable">
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th onclick="sortGiven(this,false);" class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col">
+                    <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate" >{!$label.SprintWall_Header_Title}</span>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable">
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-2" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th onclick="sortGiven(this,false);" style="width: 180px;" class="slds-is-sortable slds-is-resizable slds-text-title_caps headliner_columns_work" scope="col">
+                    <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate" >{!$label.SprintWall_Header_Status}</span>
+                      <div class="slds-icon_container"></div>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable" style="z-index: 10;">
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-3" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th onclick="sortGiven(this,false);" style="width: 180px;" class="slds-is-sortable slds-is-resizable slds-text-title_caps headliner_columns_work" scope="col">
+                    <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate" >{!$label.SprintWall_Header_Assignee}</span>
+                      <div class="slds-icon_container"></div>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable" style="z-index: 10;">
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-4" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th onclick="sortGiven(this,false);" style="width: 90px;" class="slds-is-sortable slds-is-resizable slds-text-title_caps headliner_columns_work" scope="col">
+                    <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="-1">
+                      <span class="slds-truncate">{!$label.SprintWall_Header_Points}</span>
+                      <div class="slds-icon_container"></div>
+                      <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                      <div class="slds-icon_container">
+                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true" >
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                        </svg>
+                      </div>                          
+                    </a>
+                    <div class="slds-resizable" style="z-index: 10;">
+                      <input min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-5" tabindex="-1" type="range"/>
+                      <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                        <span class="slds-resizable__divider"></span>
+                      </span>
+                    </div>
+                  </th>
+                  <th class="slds-is-interactive headliner_columns_tasks" style="display: none; width:600px;">
+                    <div class="slds-grid" style="padding-left: 12px; color: #02A9FF">
+                      <div class="slds-col">{!$label.SprintWall_Header_Task_Not_Started}</div>
+                      <div class="slds-col">{!$label.SprintWall_In_Progress}</div>
+                      <div class="slds-col">{!$label.SprintWall_Header_Completed}</div>
+                    </div>
+                  </th>
+                  <th scope="col" style="width: 25px;">
+                    <div class="slds-th__action" >
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="mainTableBody">
+                <apex:repeat value="{!sw.userStories}" var="us" id="UserStoryRepeater">
+                  <tr class="slds-hint-parent draggableElement row{!us.theUS.Id}" id="row{!us.index}" data-workid="{!us.theUS.Id}">
+                    <td role="gridcell" class="slds-cell-edit slds-cell-error" style="text-align: center;">
+                      <apex:inputHidden value="{!us.theUS.copado__Order__c}" id="hiddenOrder"/>
+                      <apex:inputHidden value="{!us.theUS.Id}" id="usId"/>
+                      <apex:outputText value="{!us.theUS.copado__Order__c+1}" html-customClass="output"/>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate" style="text-align: center;">
+                      <apex:inputCheckbox value="{!us.selected}" styleClass="SelectedCheckBox"/>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate">
+                      <a href="/{!us.theUS.Id}">
+                        <apex:outputField value="{!us.theUS.Name}" html-customClass="output"/>
+                      </a>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate" ondblclick="showInput('{!us.theUS.Id}usType');">
+                      <apex:outputText styleClass="{!us.theUS.Id}usTypeOUT" id="usTypeOUT" value="{!us.rt}" html-customClass="output"/>
+                      <apex:outputPanel layout="block" style="display: none;"  styleClass="{!us.theUS.Id}usTypeIN">
+                        <apex:selectList value="{!us.rt}" multiselect="false" size="1" styleClass="slds-select" onchange="rowChanged('{!us.theUS.Id}usType','{!us.index}');" html-data-id="{!us.theUS.Id}usType">
+                          <apex:selectOptions value="{!usRecordTypes}" id="usTypeIN"/>
+                        </apex:selectList>
+                        <p/>
+                      </apex:outputPanel>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate" ondblclick="showInput('{!us.theUS.Id}usTitle');">
+                      <apex:outputText value="{!us.theUS.copado__User_Story_Title__c}" html-customClass="output" id="usTitleOUT" styleClass="{!us.theUS.Id}usTitleOUT"   title="{!us.theUS.copado__User_Story_Title__c}"/>
+                      <apex:outputPanel layout="block" style="display: none;" styleClass="{!us.theUS.Id}usTitleIN">
+                        <apex:inputField value="{!us.theUS.copado__User_Story_Title__c}" html-data-id="{!us.theUS.Id}usTitle" onchange="rowChanged('{!us.theUS.Id}usTitle','{!us.index}');" styleclass="slds-input" id="usTitleIN"/>
+                      </apex:outputPanel>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate extra-column" ondblclick="showInput('{!us.theUS.Id}usStatus');">
+                      <apex:outputText value="{!us.theUS.copado__Status__c}" html-customClass="output" id="usStatusOUT" styleClass="{!us.theUS.Id}usStatusOUT"   title="{!us.theUS.copado__Status__c}"/>
+                      <apex:outputPanel layout="block" style="display: none;" styleClass="{!us.theUS.Id}usStatusIN">
+                        <apex:inputField value="{!us.theUS.copado__Status__c}" html-data-id="{!us.theUS.Id}usStatus" onchange="rowChanged('{!us.theUS.Id}usStatus','{!us.index}');" styleclass="slds-select" id="usStatusIN"/>
+                      </apex:outputPanel>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate extra-column" ondblclick="showInput('{!us.theUS.Id}usDev');">
+                      <apex:outputPanel layout="block" styleClass="{!us.theUS.Id}usDevOUT" id="usDevOUT">
+                        <apex:outputField value="{!us.theUS.copado__Developer__c}" html-customClass="output"  />
+                      </apex:outputPanel>
+                      <apex:outputPanel layout="block" style="display: none;text-align: right;" styleClass="{!us.theUS.Id}usDevIN">
+<!--                         <apex:inputField value="{!us.theUS.copado__Developer__c}" html-data-id="{!us.theUS.Id}usDev" onchange="rowChanged($copado(this).data('id'),'{!us.index}');" styleclass="slds-input" id="usDevIN"/> -->
+                      <c:LightningReadyInputFields SObject="{!us.theUS}" Field="Developer__c"  showLabel="false" onChangeHandler="rowChanged($copado(this).data('id'),'{!us.index}');" identity="{!us.theUS.Id}usDev"/>
+                      </apex:outputPanel>
+                    </td>
+                    <td role="gridcell" class="slds-cell-edit slds-truncate extra-column" ondblclick="showInput('{!us.theUS.Id}usPoint');">
+                      <apex:outputText value="{!us.theUS.copado__Story_Points_SFDC__c}" html-customClass="output" id="usPointOUT" styleClass="{!us.theUS.Id}usPointOUT"/>
+                      <apex:outputPanel layout="block" style="display: none;" styleClass="{!us.theUS.Id}usPointIN">
+                        <apex:inputField value="{!us.theUS.copado__Story_Points_SFDC__c}"  html-data-id="{!us.theUS.Id}usPoint" onchange="rowChanged('{!us.theUS.Id}usPoint','{!us.index}');" styleclass="slds-input" id="usPointIN"/>
+                      </apex:outputPanel>
+                    </td>
+                    <td class="slds-text-body--small column-tasks" style="min-width:600px; display: none;">
+                      <div class="work_columns">
+                        <div class="drag_bounds"></div>
+                        <div class="work_column work_column1">
+                          <div class="work_tasks">
+                            <ul data-type="Not Started" class="ui-sortable" style="">
+                              <!-- NOT STARTED TASKS -->
+                              <apex:outputPanel id="IPTasks">
+                                <apex:repeat value="{!us.theTasks['Not Started']}" var="tsk">
+                                  <li class="task_card"  data-taskid="{!tsk.theUSTask.Id}">
+                                    <div class="task_row1">
+                                      <div class="task_row1_holder">
+                                        <div class="task_desc">
+                                          <apex:inputTextArea value="{!tsk.theUSTask.Subject__c}" html-data-fieldName="Subject__c" html-maxlength="255" onchange="updateTaskJS(this);"/>
+                                        </div>
+                                      </div>
+                                      <div class="task_img"></div>
+                                    </div>
+                                    <div class="task_row2">
+                                      <apex:outputPanel layout="block" styleClass="task_grippy"/>
+                                      <div class="task_rh">{!$Label.copado__sprintwall_tasks_labels_hours}</div>
+                                      <div class="task_hours">
+                                        <apex:inputText value="{!tsk.theUSTask.Hours_Remaining__c}" maxlength="3" size="3" html-data-fieldName="Hours_Remaining__c" id="taskHourRemaining" onchange="updateTaskJS(this);"/>
+                                      </div>
+                                      <div class="task_hint task_assignee_name" ></div>
+                                      <div class="task_link">
+                                        <a onclick="deleteTaskJS(this);" style="color: white !important;">
+                                          <span class="slds-icon__container">X</span>
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </apex:repeat>
+                              </apex:outputPanel>
+                            </ul>
+                          </div>
+                        </div>
+                        <!-- IN PROGRESS TASKS -->
+                        <div class="work_column work_column2">
+                          <div class="work_tasks">
+                            <ul data-type="In Progress" class="ui-sortable" style="">
+                              <apex:repeat value="{!us.theTasks['In Progress']}" var="tsk">
+                                <li class="task_card"  data-taskid="{!tsk.theUSTask.Id}">
+                                  <div class="task_row1">
+                                    <div class="task_row1_holder">
+                                      <div class="task_desc">
+                                        <apex:inputTextArea value="{!tsk.theUSTask.Subject__c}" html-data-fieldName="Subject__c" html-maxlength="255" onchange="updateTaskJS(this);"/>
+                                      </div>
+                                    </div>
+                                    <div class="task_img"></div>
+                                  </div>
+                                  <div class="task_row2">
+                                    <apex:outputPanel layout="block" styleClass="task_grippy"/>
+                                    <div class="task_rh">{!$Label.copado__sprintwall_tasks_labels_hours}</div>
+                                    <div class="task_hours">
+                                      <apex:inputText value="{!tsk.theUSTask.Hours_Remaining__c}" maxlength="3" size="3" html-data-fieldName="Hours_Remaining__c" id="taskHourRemaining" onchange="updateTaskJS(this);"/>
+                                    </div>
+                                    <div class="task_hint task_assignee_name" ></div>
+                                    <div class="task_link">
+                                      <a onclick="deleteTaskJS(this);" style="color: white !important;">
+                                        <span class="slds-icon__container">X</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                </li>
+                              </apex:repeat>
+                            </ul>
+                          </div>
+                        </div>
+                        <!-- COMPLETED TASKS -->
+                        <div class="work_column work_column3">
+                          <div class="work_tasks">
+                            <ul data-type="Completed" class="ui-sortable" style="">
+                              <apex:repeat value="{!us.theTasks['Completed']}" var="tsk">
+                                <li class="task_card"  data-taskid="{!tsk.theUSTask.Id}">
+                                  <div class="task_row1">
+                                    <div class="task_row1_holder">
+                                      <div class="task_desc">
+                                        <apex:inputTextArea value="{!tsk.theUSTask.Subject__c}" html-data-fieldName="Subject__c" html-maxlength="255" onchange="updateTaskJS(this);"/>
+                                      </div>
+                                    </div>
+                                    <div class="task_img"></div>
+                                  </div>
+                                  <div class="task_row2">
+                                    <apex:outputPanel layout="block" styleClass="task_grippy"/>
+                                    <div class="task_rh">{!$Label.copado__sprintwall_tasks_labels_hours}</div>
+                                    <div class="task_hours">
+                                      <apex:inputText value="{!tsk.theUSTask.Hours_Remaining__c}" maxlength="3" size="3" html-data-fieldName="Hours_Remaining__c" id="taskHourRemaining" onchange="updateTaskJS(this);"/>
+                                    </div>
+                                    <div class="task_hint task_assignee_name" ></div>
+                                    <div class="task_link">
+                                      <a onclick="deleteTaskJS(this);" style="color: white !important;">
+                                        <span class="slds-icon__container">X</span>
+                                      </a>
+                                    </div>
+                                  </div>
+                                </li>
+                              </apex:repeat>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td role="gridcell" class="slds-row-action slds-truncate" style="text-align: center;">
+                      <button class="slds-button slds-button--icon-border-filled slds-button--icon-border-small" style="width: 16px; height: 16px;">
+                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--x-small">
+                          <use
+                            xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#down')}">
+                          </use>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                </apex:repeat>
+              </tbody>
+            </table>
+            <!-- Menu for dropdown on each row -->
+            <apex:outputPanel layout="block" id="theWorkOptions">
+              <div class="slds-dropdown slds-dropdown--actions slds-dropdown--menu" id="menu_work_options" data-index="" data-usId="">
+                <ul class="slds-dropdown__list" role="menu">
+                  <li class="slds-dropdown__item" data-action="edit" href="#" role="menuitem option">
+                    <a href="#">{!$label.SprintWall_Action_Edit}</a>
+                  </li>
+                  <li class="slds-dropdown__item" data-action="add" href="#" role="menuitem option" style="display: none;">
+                    <a href="#">{!$label.SprintWall_Action_Edit_Add_task}</a>
+                  </li>
+                  <apex:outputPanel layout="block" rendered="{!AND(nextSprintId!= null,nextSprintId != '')}" >
+                    <li class="slds-dropdown__item" data-action="next" role="menuitem option">
+                      <a href="#" >{!$label.SprintWall_Action_Edit_Move_to_next_Sprint}</a>
+                    </li>
+                  </apex:outputPanel>
+                  <li class="slds-dropdown__item" data-action="remove" href="#" role="menuitem option">
+                    <a href="#">{!$Label.copado__sprintwall_action_remove_from_sprint}</a>
+                  </li>
+                </ul>
+              </div>
+              <script>
+                    var $copado = $copado || jQuery.noConflict();
+                    var workOptionsDropdown = $copado('#menu_work_options').hide();
+                    $copado('.slds-row-action button').on('click', function(event) {
+                        var index = $copado(this).parent().parent().attr('id').split("row").pop();
+                        var usId = $copado(this).parent().parent().children('td:first-child').children('input:nth-child(2)').val();                        
+                        if (workOptionsDropdown.is(':visible')) {
+                            hide_dd();
+                            return false;
+                        }
+                        hide_dd();
+                        workOptionsDropdown.data('active-button', this);
+                        workOptionsDropdown.data('index', index);
+                        var editTaskUrl = "{!if(isLightning,'/+usId+/e','/+usId+/e?retURL=%2F'+sw.theSprint.Id)}"
+                        var editTaskUrlFormat = editTaskUrl.replace("+usId+", usId);
+                        workOptionsDropdown.find("li[data-action=edit] a").attr('href',editTaskUrlFormat);
+                        if(!taskView) {
+                            workOptionsDropdown.find('li[data-action=add]').hide();
+                            workOptionsDropdown.find('li[data-action=edit]').show();
+                            workOptionsDropdown.find('li[data-action=remove]').show();
+                            workOptionsDropdown.find('li[data-action=next]').show();
+                        } else {
+                            workOptionsDropdown.find('li[data-action=add]').show();
+                            workOptionsDropdown.find('li[data-action=edit]').hide();
+                            workOptionsDropdown.find('li[data-action=remove]').hide();
+                            workOptionsDropdown.find('li[data-action=next]').hide();
+                        }
+                        workOptionsDropdown.show();
+                        workOptionsDropdown.position({my:"right top",at:"right bottom",of:this,offset:"0px 0px", collision:"fit"});   
+                        return false;
+                      });
+
+                    $copado('#menu_work_options').on('mouseleave', function(event) {
+                        hide_dd();
+                    });
+                    // WORK: MOVE TO NEXT SPRINT MENU ITEM
+                    workOptionsDropdown.find("li[data-action=next] a").on('click', function(event) {
+                        var i = $copado(workOptionsDropdown).data('index');
+                        MoveToNextSprintJS(i);                        
+                        removeRow(i);         
+                        $copado('#menu_work_options').hide();               
+                    });
+                    // WORK : REMOVE FROM CURRENT SPRINT
+                    workOptionsDropdown.find("li[data-action=remove] a").on('click', function(event) {
+                        var i = $copado(workOptionsDropdown).data('index');
+                        var conf = confirm('{!$Label.copado__sprintwall_confirm_remove_us}');
+                          if (conf == true) {                            
+                            removeFromCurrenSprintJS(i);  
+                            removeRow(i);           
+                            $copado('#menu_work_options').hide();             
+                          }                        
+                    });
+                    workOptionsDropdown.find("li[data-action=add] a").on('click', function(event) {
+                        var i = $copado(workOptionsDropdown).data('index');
+                        createNewUSTaskJS(i);
+                    });
+                    </script>
+            </apex:outputPanel>
+          </apex:outputPanel>
+          <apex:actionFunction action="{!massUpdateRecords}" name="massUpdateRecords" reRender="usTypeOUT,usTypeIN, usTitleOUT,usTitleIN, usDevOUT,usDevIN, usPointOUT,usPointIN, usStatusOUT,usStatusIN, theMessages" status="actStatus"></apex:actionFunction>
+          <apex:actionFunction name="createNewUSTaskJS" immediate="true" action="{!createNewUSTask}" reRender="IPTasks" status="actStatus" oncomplete="initializeTaskSortable();">
+            <apex:param name="firstParam" assignTo="{!actionIndex}" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction immediate="true" action="{!updateTaskStatusApex}" name="updateTaskStatus" rerender="theMessages" status="actStatus">
+            <apex:param name="rIndex" value="" />
+            <apex:param name="beforeKey" value="" />
+            <apex:param name="afterKey" value="" />
+            <apex:param name="taskID" value="" />
+            <apex:param name="tfield" value="" />
+            <apex:param name="tValue" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction immediate="true" action="{!deleteTask}" name="deleteTask" rerender="theMessages" status="actStatus" oncomplete="initializeTaskSortable();">
+            <apex:param name="rIndex" value="" />
+            <apex:param name="beforeKey" value="" />
+            <apex:param name="taskID" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction name="rerenderType" reRender="usTypeOUT,usTypeIN, usTitleOUT,usTitleIN, usDevOUT,usDevIN, usPointOUT,usPointIN, usStatusOUT,usStatusIN,devNameHidden" ></apex:actionFunction>
+          <apex:actionFunction name="MoveToNextSprintJS" action="{!MoveToNextSprint}" immediate="true" reRender="hidenWrapper,actualVelocity,plannedVelocity" status="actStatus">
+            <apex:param name="mtnsIndex" assignTo="{!actionIndex}" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction name="removeFromCurrenSprintJS" immediate="true" action="{!removeFromCurrenSprint}" reRender="actualVelocity,plannedVelocity,theMessages" status="actStatus" >
+            <apex:param name="removeRowIndex" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction name="rrPanel" rendered="mtnsButton"/>
+          <apex:actionFunction name="dmlALL" action="{!dmlALL}" reRender="theMessages"/>
+          <!-- TO CREATE A SINGLE ROW DML -->
+          <apex:actionFunction name="dmlRow" action="{!dmlRow}" reRender="usTypeOUT,usTypeIN, usTitleOUT,usTitleIN, usDevOUT, usPointOUT,usPointIN, usStatusOUT,usStatusIN,devNameHidden,theMessages" status="actStatus">
+            <apex:param name="actionIndex" assignTo="{!actionIndex}" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction name="dmlALLNoReRender" action="{!dmlALL}" reRender="theMessages" status="actStatus"/>
+          <apex:actionFunction name="newUserStoryJS" action="{!newUserStory}" reRender="sprint_leftpanel, hidenWrapper,theWorkOptions,theStyles" oncomplete="$copado('[id$=saveUSbutton]').prop('disabled', false);">
+            <apex:param name="usRtId" assignTo="{!usRtId}" value="" />
+          </apex:actionFunction>
+          <apex:actionFunction name="calculateVelocities" action="{!calculateVelocities}" 
+                    reRender="actualVelocity,plannedVelocity"/>
+          <apex:actionStatus onstart="onStartStatus();" onstop="onFinishStatus();" id="actStatus"/>
+          <div layout="block" class="demo-only" style="height: 640px;display: none; position: absolute;z-index: 1000;" id="modalMassUpdated">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+              <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                  <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="closeModalById('modalMassUpdated');return false;">
+                    <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                      <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                  </button>
+                  <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$label.SprintWall_Button_MassUpdate}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                  <div class="slds-grid slds-grid_pull-padded-medium">
+                    <div class="slds-col slds-p-horizontal_medium">
+                      <apex:repeat value="{!$ObjectType.copado__User_Story__c.FieldSets.copado__SprintWall_MassUpdate}" var="f">
+                        <c:LightningReadyInputFields SObject="{!massUpdateUS}" Field="{!f}"/>
+                      </apex:repeat>
+                    </div>
+                  </div>
+                </div>
+                <footer class="slds-modal__footer">
+                  <button class="slds-button slds-button_neutral" onclick="closeModalById('modalMassUpdated');return false;">{!$Label.copado__sprintwall_button_cancel}</button>
+                  <apex:commandButton styleClass="slds-button slds-button_brand" onclick="massUpdateRecordsJS(); return false;" value="Save"/>
+                </footer>
+              </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+          </div>
+          <div class="demo-only" style="height: 640px;display: none; position: absolute;z-index: 1000;" id="newUSModal">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+              <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                  <button  class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="closeModalById('newUSModal');return false;">
+                    <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                      <use xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                  </button>
+                  <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!$label.SprintWall_Button_New_US}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="padding-left: 40%;">
+                  <div class="slds-grid slds-grid_pull-padded-medium">
+                    <div class="slds-col slds-p-horizontal_medium">
+                      <fieldset class="slds-form-element">
+                        <legend class="slds-form-element__legend slds-form-element__label">
+                          <abbr class="slds-required" title="required">*</abbr>{!$label.SprintWall_New_US_Record_Type}
+                        </legend>
+                        <div class="slds-form-element__control">
+                          <apex:repeat value="{!rtWithId}" var="rtName">
+                            <span class="slds-radio">
+                              <input type="radio" id="{!rtWithId[rtName]}" name="options" value="on" checked=""/>
+                              <label class="slds-radio__label" for="{!rtWithId[rtName]}">
+                                <span class="slds-radio_faux"></span>
+                                <span class="slds-form-element__label">{!rtName}</span>
+                              </label>
+                            </span>
+                          </apex:repeat>
+                        </div>
+                      </fieldset>
+                    </div>
+                  </div>
+                </div>
+                <footer class="slds-modal__footer">
+                  <button class="slds-button slds-button_neutral" onclick="closeModalById('newUSModal');return false;">{!$Label.copado__sprintwall_button_cancel}</button>
+                  <apex:commandButton id="saveUSbutton" disabled="true" styleClass="slds-button slds-button_brand" onclick="saveUserStory(); return false;" value="Save"/>
+                </footer>
+              </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+          </div>
+        </apex:form>
+        <apex:outputPanel id="sprint_rightPanel" styleclass="slds-table_bordered slds-table_col-bordered" layout="block" style="display: none;padding-left: 10px;" rendered="{!isChatterEnabled}">
+          <chatter:feed entityId="{!sw.sId}" showPublisher="true"/>
+        </apex:outputPanel>
+      </apex:outputPanel>
+    </div>
+    <script type="text/javascript">
+            var $ = jQuery.noConflict();
+            var $copado = $copado || jQuery.noConflict();
+          /*
+            On Ready enable sort and allow only numbers on task hours
+           */
+          $copado( document ).ready(function() {
+            taskTimeformat();
+            enableSort();
+            //Sticky Header only for LEX
+            if({!isLightning}){
+              $copado(".slds-page-header").css('position','fixed');
+              $copado(".slds-page-header").css('top','0');  
+              $copado(".slds-page-header").css('width','100%');  
+              $copado(".slds-page-header").css('z-index','100');  
+              $copado("[id$='sprint_Content']").css('margin-top',$copado(".slds-page-header").outerHeight());
+            }
+          });
+
+            //Sortable for each row 
+            function enableSort(){
+              $copado( "#mainTableBody"  ).sortable({
+                axis: "y",
+                classes: {
+                  "ui-sortable": "highlight"
+                },
+                update: function(event, ui) {
+                 $copado('#mainTable tr').each(function() {
+                  $copado(this).children('td:first-child').children('span').html($copado(this).index()+1);
+                  //This will set the sort field which is input hiden with the calculated order
+                  $copado(this).children('td:first-child').children('input:first-child').val($copado(this).index());
+                 });
+                  dmlALLNoReRender();
+                }
+              });    
+              $copado("#mainTableBody").sortable("enable");     
+              $copado("#sortImage").show();     
+            }
+            function disableSort(){
+              $copado("#mainTableBody").sortable("disable");
+              $copado("#sortImage").hide();
+            //Test Sort on Tasks
+               $copado('#mainTable tr:not(:first)').each(function() {
+                  initializeTaskSortable($copado(this));
+               });
+            }
+
+            /*
+              Sortable definition fot Tasks 
+             */
+            function initializeTaskSortable($dom) {
+                    if($dom){
+                    var storyId = $dom.data('workid')                    
+                      $dom.find(".work_tasks>ul").sortable({
+                       opacity: 0.5,
+                       distance: 10,
+                       cancel: '.task_desc,.task_hours input,.task_dd,.task_link',
+                       forcePlaceholderSize: true,
+                       placeholder: "task_highlight",
+                       items: "li:not(.freeze)",
+                       tolerance: 'pointer',
+                       connectWith: ".row" + storyId + " ul",
+                          over: function(event, ui) {
+
+                          },
+                          stop: function(event, ui) {
+                              recalcRow($copado(this));
+                          },
+                          activate: function(event, ui) {
+
+                          },
+                          over: function(event, ui) {
+                              recalcRow($copado(this));
+                          },
+                          
+                          start:function(event, ui) {
+                              $copado(ui.placeholder).height($copado(ui.item).outerHeight()); // hack for Chrome Windows
+                              hide_dd();
+                          },
+                          update:function(event, ui) {
+                              if(ui.sender){
+                                updateTaskStatus($copado(this).closest('tr').attr('id').split("row").pop(),$copado(ui.sender).data('type'), $copado(event.target).data('type'), $copado(ui.item).data('taskid'));
+                              }
+                          }
+                      });
+                    }
+                }
+            /*
+              resize hack for IE
+             */                
+            function recalcRow(row) {
+                var isIE = !!navigator.userAgent.match(/Trident.*rv\:11\./)  || $copado.browser.msie;
+                if (isIE) {
+                    var row = $copado(row).closest('li[data-workid]');
+                    row.css('height','auto');
+                    row.height(row.height())
+                }
+            }
+            /*
+              Actionfunction functions
+
+             */
+            function onStartStatus(){
+              $copado('[id$=loadingImage]').show();
+            }
+            function onFinishStatus(){
+              $copado('[id$=loadingImage]').hide();
+            }
+            /*
+              Hide function 
+             */
+            function hide_dd() {
+                $copado('.dropdown,.slds-dropdown').css('top','0px','left','0px').hide();
+                $copado('#headliner #headliner_status button,#headliner #headliner_assignee button,#headliner_qe button,button.storypoints,button#assigneeOptions,button#activity,button#newButton,button#filterOptions,.work_desc .work_desc_status .work_desc_status_view button,.work_desc .work_desc_status .work_desc_status_dropdown button').removeClass('ui-state-active button-active ui-state-focus button-active-left button-active-right');
+                $copado(document).unbind('click', hide_dd);
+            }
+            /*
+              When User clicks on Mass Update Modal
+              at least one item must be selected
+             */
+            function OpenMassUpdateModal(){  
+              var Boolean = false;          
+              $copado('.SelectedCheckBox').each(function(){                  
+                  if ($copado(this).prop("checked")){
+                      Boolean = true;
+                      return;
+                  }                 
+              });
+                  if(Boolean){
+                    document.getElementById("modalMassUpdated").style.display = "block"; 
+                  }else{
+                    alert('Please select one or more User Stories');
+                  }  
+            }
+            /*
+              When User clicks on New User Story
+             */
+            function OpenNewUserStoryModal(){
+              document.getElementById("newUSModal").style.display = "block"; 
+            }
+            /*
+              Inline edit: When User double clicks on an output input is shown 
+             */
+            function showInput(idname){
+                $copado("."+idname+"OUT").css({display: 'none'});
+                $copado("."+idname+"IN").css({display: ''});  
+                $copado("[data-id$="+idname+"]").focus();
+                if(contains(idname, 'Point')){
+                  $copado("[data-id$="+idname+"]").attr("maxlength","3");
+                  //User can only input 3 Numbers
+                  // $copado("[data-id$="+idname+"]").attr("onkeypress","return event.charCode >= 48 && event.charCode <= 57");        
+                  $copado("[data-id$="+idname+"]").attr("onkeypress","return ((event.charCode >= 48 && event.charCode <= 57) || event.keyCode == 13 || event.keyCode == 27)"); 
+                }else if (contains(idname, 'Dev')){
+                  //On Dev Input
+                  $copado("[id$=usDevIN]").css("width","0.1px");
+                  $copado("[id$=usDevIN]").css("border","0px");
+                  $copado("[id$=usDevIN]").removeClass( "slds-input" );
+                }
+                //When Pressing Enter or Escape hide inputs if nothing changed
+                $copado(".slds-input").keydown(function (e) {
+                  if (e.keyCode == 13 || e.keyCode == 27 || e.keyCode == 9) {
+                        $copado("[class$='OUT']").css({display: ''});
+                        $copado("[class$='IN']").css({display: 'none'});
+                  }
+                });
+
+            }
+            
+          //On Task Time only allow numbers and dot
+          function taskTimeformat(){
+            $copado("[id$=taskHourRemaining]").keypress(function(event) {
+              return ((event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46 || event.keyCode == 27
+                || event.keyCode == 8 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 13 || event.keyCode == 9);
+            });
+          }
+          /*
+            When User changes any field on Task
+           */
+          function updateTaskJS(input){
+            updateTaskStatus($copado(input).closest('tr').attr('id').split("row").pop(),$copado(input).closest('ul').data('type'),'', $copado(input).closest('li').data('taskid'), $copado(input).data('fieldname'), $copado(input).val());    
+
+          }
+          /*
+            When User wants to delete a task
+           */
+          function deleteTaskJS(del){
+            var r = confirm('{!$Label.copado__sprintwall_confirm_delete_task}');
+              if (r == true) {
+                  deleteTask($copado(del).closest('tr').attr('id').split("row").pop(),$copado(del).closest('ul').data('type'),$copado(del).closest('li').data('taskid'));  
+                  $copado(del).closest('li').remove();
+              } 
+          }          
+          /*
+            Generic contains for string
+           */
+          function contains(value, searchFor){
+              return (value || '').indexOf(searchFor) > -1;
+          }
+            /*
+              hideInput and show outputs
+             */
+            function hideInput(idname){
+                $copado("."+idname+"OUT").css({display: ''});
+                $copado("."+idname+"IN").css({display: 'none'});   
+            }
+
+            //To enable Save button on new User Story
+            $copado('[name$=options]').click(function(evt){
+              $copado('[id$=saveUSbutton]').prop("disabled", false);
+              
+            }); 
+            //Function that Save button calls on modal
+            function saveUserStory(){
+              $copado('[id$=saveUSbutton]').prop("disabled", 'disabled');
+              newUserStoryJS($copado('input[name=options]:checked', '#newUSModal').attr('id'));
+              setInterval(hideSaveAndNew(), 3000);
+            }
+            //This is to close inline edit fields when clicking outside the current input
+            $copado('#mainTableBody').click(function(evt){
+                   if($copado(evt.target).attr('class') == "slds-select" || $copado(evt.target).attr('class') == "slds-input" || $copado(evt.target).attr('class') == undefined || $copado(evt.target).attr('class') == "slds-input__icon" || $copado(evt.target).attr('class') == "lookupInput" || $copado(evt.target).attr('class') == "lookupIconOn"){
+                      return;
+                   }         
+                    $copado("[class$='OUT']").css({display: ''});
+                    $copado("[class$='IN']").css({display: 'none'});
+                    $copado('#menu_work_options').hide();
+            });
+
+
+            function massUpdateRecordsJS(){              
+              massUpdateRecords();
+              document.getElementById("modalMassUpdated").style.display = "none";                 
+            }      
+            function closeModalById(mId){
+              document.getElementById(mId).style.display = "none";
+            }
+            function editDetailJS(){
+              document.getElementById("editDetail").style.display = "block"; 
+            }  
+            function rowChanged(rowId,index){
+              dmlRow(index);
+              if(rowId.indexOf("usStatus") >= 0 || rowId.indexOf("usPoint") >= 0 ){           
+                calculateVelocities();  
+              }           
+              hideInput(rowId);
+            }
+
+            function moveTNS(index){
+              MoveToNextSprintJS(index);
+            }
+            function removeRow(row){
+                $copado("[id$='row"+row+"']").remove();
+            }
+            function selectAll(){
+              if ($copado('#selectAllCheckbox').prop("checked")) {
+                $copado('.SelectedCheckBox').prop("checked", true);
+              }else{
+                $copado('.SelectedCheckBox').prop("checked", false);
+              }
+            }
+            function toggleChatter(){
+              if($copado("[id$='sprint_rightPanel']").is(':visible')){
+                $copado("[id$='sprint_leftpanel']").css("width", "100%");
+                $copado("[id$='sprint_rightPanel']").css("display", "none");
+                $copado("[id$='buttonCharts']").removeClass( "slds-is-selected" );
+              }else{
+                $copado("[id$='sprint_leftpanel']").css("float", "left");
+                $copado("[id$='sprint_leftpanel']").css("width", "75%");
+                $copado("[id$='sprint_leftpanel']").css("overflow", "hidden");
+
+                $copado("[id$='sprint_rightPanel']").css("float", "left");
+                $copado("[id$='sprint_rightPanel']").css("width", "25%");
+                $copado("[id$='sprint_rightPanel']").css("overflow", "hidden");
+                $copado("[id$='sprint_rightPanel']").css("display", "block");
+                $copado("[id$='buttonCharts']").addClass( "slds-is-selected" );
+                $copado("[id$='publisherBottomBar']").css("height", "50px");
+                
+              }
+            }
+            var taskView = false;
+            function openfullWorkView(){    
+                taskView = true;            
+                disableSort();                
+                $copado(".headliner_columns_work").css("display", "none");
+                $copado(".headliner_columns_tasks").css("display", "table-cell");
+                $copado(".column-tasks").css("display", ""); 
+                $copado(".extra-column").css("display", "none");                 
+  
+                $copado("[id$='fullWorkView']").addClass( "slds-is-selected" );                
+                $copado("[id$='compactWorkView']").removeClass( "slds-is-selected" );
+
+            }
+            function openContactWorkView(){     
+                taskView = false;           
+                $copado(".headliner_columns_work").css("display", "table-cell");
+                $copado(".headliner_columns_tasks").css("display", "none");
+                $copado(".extra-column").css("display", "");                 
+                $copado(".column-tasks").css("display", "none");   
+                $copado("[id$='compactWorkView']").addClass( "slds-is-selected" );                
+                $copado("[id$='fullWorkView']").removeClass( "slds-is-selected" );  
+                if(sortEnabled == true){
+                    enableSort();                         
+                }  
+
+            }
+            function hideSaveAndNew(){
+              if($copado('button[title="Save & New"]').length>0){
+                $copado('button[title="Save & New"]').css("display", "none");
+              }
+
+            }
+            function sortTable(f,n){
+              var rows = $copado('#mainTable tbody  tr').get();
+
+              rows.sort(function(a, b) {
+                             
+                var A = getVal(f,a);
+                var B = getVal(f,b);
+                if(A < B) {
+                  return -1*f;
+                }
+                if(A > B) {
+                  return 1*f;
+                }
+                return 0;
+              });
+              
+              function getVal(f,elm){
+                var v;
+                if($copado(elm).children('td').eq(n)[0]){
+                  var element = $copado(elm).children('td').eq(n)[0].querySelectorAll("span[customClass='output']");
+                  
+                  if(element.length > 0){
+                    v = element[0].textContent.toUpperCase();;
+                  }else{
+                    var aelement = $copado(elm).children('td').eq(n)[0].querySelectorAll("a");
+                    if(aelement.length > 0){
+                      v = aelement[0].textContent.toUpperCase();;
+                    }else{
+                      v = "";
+                    }
+                  }
+                }else{
+                  v = "";
+                }
+                
+                if($copado.isNumeric(v)){
+                  v = parseInt(v,10);
+                }
+                return v;
+              }
+
+              $copado.each(rows, function(index, row) {
+                $copado('#mainTable').children('tbody').append(row);
+              });
+            }
+            var f_sl = 1;
+            var sortEnabled = true;
+            function sortGiven(elem,allowDrag){
+                if(f_sl == 1){
+                  $copado(elem).closest('th').addClass('slds-is-sorted slds-is-sorted_desc');                
+                  $copado(elem).closest('th').removeClass('slds-is-sorted slds-is-sorted_asc');                
+                }else{
+                  $copado(elem).closest('th').addClass('slds-is-sorted slds-is-sorted_asc');                
+                  $copado(elem).closest('th').removeClass('slds-is-sorted slds-is-sorted_desc');                                  
+                }
+                
+                if(allowDrag == true && f_sl == -1 && taskView == false){
+                  $copado("#mainTableBody").sortable("enable");
+                  sortEnabled = true;
+                  $copado("#sortImage").show();
+                }else{
+                  $copado("#mainTableBody").sortable("disable");
+                  sortEnabled = false;
+                  $copado("#sortImage").hide();
+                }
+                f_sl *= -1;
+                var n = $copado(elem).prevAll().length;
+                sortTable(f_sl,n);
+            }
+
+                CalculateWidth = function(elem, e) {
+                    var childObj = $copado(elem).children().first();
+                    var parObj = childObj.parents().first();
+                    var count = 1;
+                    
+                    while(parObj.prop("tagName") != 'TH') {
+                        parObj = parObj.parents().first();
+                        count++;
+                    }
+
+                    var mouseStart=e.clientX;
+                    mStart = mouseStart;
+                    oWidth = parObj.outerWidth();
+                };
+                 
+                SetNewWidth = function(elem, e) {
+                    var childObj = $copado(elem).children().first();
+                    var parObj = childObj.parents().first();
+                    var count = 1;
+                    
+                    while(parObj.prop("tagName") != 'TH') {
+                        parObj = parObj.parents().first();
+                        count++;
+                    }
+
+                    var mouseStart = mStart;
+                    var oldWidth = oWidth
+                    
+                    if(e.clientX > 0){
+                        var newWidth = e.clientX- parseFloat(mouseStart)+parseFloat(oldWidth);
+                        parObj.width(newWidth);
+                    }
+                }
+          
+    </script>
+    <apex:outputPanel layout="block" id="theStyles">
+      <style>
+
+          .slds-scope .slds-table--bordered, .slds-scope .slds-table_bordered {
+              border-left: 1px solid #d8dde6;
+          }
+
+          /*.slds-scope .slds-table td, .slds-scope .slds-table th{
+            padding: 0px !important;
+          }
+          .slds-scope{
+            font-size: 12px !important;
+          }
+          .ui-sortable-helper {
+            display: table;
+          }
+          .slds-cell-edit{
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;
+            line-height: 0.5 !important;
+          }
+          .slds-form-element{
+            padding-top: 0px !important;
+            padding-bottom: 0px !important;            
+          } 
+          .slds-scope .slds-th__action{
+            padding: 0 !important;
+          }  */
+
+          .work_columns {
+
+              position: relative;
+              display: table;
+              height: 100%;
+              width: 100%;
+
+          }
+          .work_columns > .drag_bounds {
+
+              position: absolute;
+              left: -10px;
+              top: -10px;
+              right: -4px;
+              bottom: -76px;
+              padding: 10px;
+
+          }     
+          .work_column {
+
+              display: table-cell;
+              position: relative;
+              vertical-align: top;
+              width: 33.3%;
+              height: 100%;
+              padding: 0px 0px 0px 0px;
+              cursor: default;
+
+          }
+          .tg {
+            position: relative;
+            list-style: none;
+            width: 100%;
+            height: 100%;
+            outline: 0;
+          }
+          .work_tasks {
+              display: block;
+              position: relative;
+              height: 100%;
+              width: 100%;
+          }
+          .work_column .work_tasks > ul {
+              display: block;
+              position: relative;
+              list-style: none;
+              width: 100%;
+              height: 100%;
+              padding: 5px 5px 10px 5px;
+              border-left: 1px #D8DDE6 solid;
+              outline: 0;
+          }
+          #sprint_leftpanel a {
+            color: #02A9FF !important;
+          }
+
+          li.task_card {
+
+              display: table;
+              position: relative;
+              margin: 0px 0px 10px 0px;
+                  margin-bottom: 10px;
+              margin-bottom: 6px;
+              border-radius: 5px;
+              border: 1px #8795AE solid;
+              padding: 0px;
+              background: #fff;
+              width: 100%;
+              font-size: 11px;
+
+          }
+          .task_desc {
+              width: 100%;
+          }
+          .task_desc textarea {
+
+              width: 100%;
+              padding: 0px 5px;
+              outline: 0;
+              max-height: 33px;
+              border: 0;
+              background: transparent;
+              resize: none;
+              box-sizing: border-box;
+              -moz-box-sizing: border-box;
+              margin: 0;
+              overflow: auto;
+
+          } 
+          .task_row2 {
+
+              display: table;
+              background: #02A9FF;
+              padding: 3px 6px;
+              border-bottom-left-radius: 3px;
+              border-bottom-right-radius: 3px;
+              font-size: 9px;
+              font-weight: bold;
+              cursor: move;
+
+          }
+          .task_rh {
+
+              display: table-cell;
+              color: #fff;
+              white-space: nowrap;
+              padding-right: 2px;
+              padding-left: 7px;
+
+          }
+          .task_hours input {
+
+              background: transparent;
+              color: #fff;
+              font-weight: bold;
+              outline: 0;
+              cursor: text;
+              min-width: 15px;
+              border-radius: 5px;
+              border: 1px transparent solid;
+              padding: 2px 2px 4px 2px;
+              text-align: center;
+
+          }
+          .task_assignee_name {
+
+              display: table-cell;
+              width: 100%;
+              text-align: right;
+              color: #848484;
+              padding-right: 5px;
+
+          }
+          .slds .task_assignee_name a {
+
+              color: #fff;
+              text-decoration: none;
+
+          }
+          .task_dd {
+
+              display: table-cell;
+              vertical-align: middle;
+              width: 100%;
+              text-align: right;
+
+          }      
+          .task_assignee_name a {
+
+              color: #fff;
+              text-decoration: none;
+
+          }        
+          .task_link .slds-icon-tiny, .task_dd .slds-icon-tiny {
+
+              width: 11px;
+              height: 11px;
+
+          }
+          .task_hours input:hover {
+
+              border: 1px #C5C5C5 solid;
+          }
+          </style>
+    </apex:outputPanel>
+  </html>
+</apex:page>

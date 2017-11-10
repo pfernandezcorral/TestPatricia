@@ -1,0 +1,14 @@
+<apex:page id="thePage" standardController="copado__Environment__c" tabStyle="copado__Environment__c">
+    
+    <c:GAnalytics />
+    <apex:sectionHeader title="Copado Selenium Testing" subtitle="{!$Label.copado__new_environment}"/>
+    
+    <apex:pageMessage id="theMessage" severity="INFO" strength="3" title="{!$Label.copado__create_environment_instructions}" detail="{!$Label.copado__new_environment_override_instructions}" />
+	
+    <script>
+        ga('send', 'pageview', {
+            'page': '/newEnvironmentOverride',
+            'title': 'New Environment Override page'
+        });
+    </script>
+</apex:page>

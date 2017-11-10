@@ -1,0 +1,23 @@
+<apex:page standardController="copado__User_Story__c" recordSetVar="records" extensions="copado.UserStoryAssignmentSetController" id="thePage">
+	<c:GAnalytics />
+	<apex:sectionHeader id="sectionHeader" title="{!$Label.copado__copado_change_management}" subtitle="{!$Label.copado__user_story_assign_release}" />
+	<apex:pageMessages id="theMessages" />
+	
+	<apex:form id="theForm">
+		<apex:pageBlock id="pb" mode="edit">
+			<apex:pageBlockButtons id="pbButtons" location="bottom">
+				<apex:commandButton id="btnCancel" value="Cancel" action="{!cancel}" />
+				<apex:commandButton id="btnAssign" value="Assign" action="{!assign}" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="pbs">
+				<apex:inputField id="if_Release" value="{!dummy.copado__Release__c}" />
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+	</apex:form>
+    <script>
+        ga('send', 'pageview', {
+          'page': '/UserStoryAssignment',
+          'title': 'User Story Assignment'
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,61 @@
+<apex:page controller="copado.SeleniumTestQuickRun" tabStyle="copado__Selenium_Test_Run__c" extensions="copado.LicenseHelper" id="thePage">
+
+    <apex:sectionHeader id="theHeader" title="Copado Selenium Testing" subtitle="{!IF(mode=='create', $Label.copado__create_selenium_settings, suite.Name)}" />
+
+    <!-- check that the feature is enabled, and the user has a license assigned -->
+    <apex:pageMessage severity="WARNING" strength="2" summary="{!possibleCSTErrorMsg}" rendered="{!!ISNULL(possibleCSTErrorMsg)}"></apex:pageMessage>
+
+    <c:GAnalytics />
+    
+    <apex:form id="theForm" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}">
+        <apex:pageBlock id="pb" mode="edit">
+            <apex:pageBlockButtons id="pbs">
+                <apex:commandButton id="btnContinue" action="{!quickRunConfirmed}" value="Continue" rendered="{!mode=='confirm'}" />
+                <apex:commandButton id="btnSave" action="{!save}" value="{!$Label.copado__save_and_run}" rendered="{!mode=='create'}"/>
+                <apex:commandButton action="{!cancel}" value="{!$Label.site.cancel}" immediate="true"/>
+            </apex:pageBlockButtons>
+            <apex:pageMessages />
+
+            <apex:outputPanel rendered="{!mode=='create'}">
+                <apex:pageMessage summary="{!$Label.copado__create_selenium_settings_info}" severity="INFO" strength="2"/>
+                <apex:pageBlockSection title="Create Quick Test Settings" columns="1">
+                    <apex:inputField value="{!settings.copado__Webdriver_URL__c}" required="true"/>
+                    <apex:outputPanel ></apex:outputPanel>
+                    <apex:inputField value="{!settings.copado__Default_Org_Credential__c}" required="true" />
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!mode!='create'}">
+                <apex:pageBlockSection title="Test Run" columns="1">
+                    <apex:outputField value="{!run.Name}" />
+                    <apex:outputField value="{!run.copado__Last_Status__c}" />
+                    <apex:outputField value="{!run.Org_Credential__r.Name}" />
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Test Suite" columns="1">
+                    <apex:outputField value="{!suite.Name}" />
+
+                    <apex:outputText value="{!count_cases} test cases in this suite" />
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Selenium Settings" columns="1">
+                    <apex:outputField value="{!settings.Name}" />
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+
+        </apex:pageBlock>
+        <apex:actionFunction name="doInit" action="{!quickRun}" reRender="theForm"/>
+
+    </apex:form>
+    
+    <script>
+           window.onload=function(){
+                doInit();
+           }
+
+        ga('send', 'pageview', {
+            'page': '/SeleniumTestQuickRun',
+            'title': 'Selenium Test Quick Run'
+        });
+    </script>
+</apex:page>

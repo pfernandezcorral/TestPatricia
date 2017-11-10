@@ -1,0 +1,68 @@
+<apex:page showHeader="true" sidebar="true" standardController="copado__Deployment_Flow__c" extensions="copado.ManageEnvVarsExt" action="{!createMissingVars}" id="thePage">
+    <link rel="stylesheet" href="{!URLFOR($Resource.Statics,'css/EnvVarsManager.css')}" /> 
+    <c:WizardUtils />
+    <head>
+       <c:GAnalytics />
+    </head>
+    <script type="text/javascript">
+    function promptVarName() {
+        var envVar = prompt(copadoLabels.ENTER_VAR_NAME, 'VAR_NAME');
+        if (envVar != null) {
+            generateNewVar(envVar);
+        }
+    }
+    function deleteByName(varName) {
+        if (confirm(copadoLabels.ARE_YOU_SURE)) {
+            doDelete(varName);
+        }
+    }
+    </script>
+    <apex:form id="theForm" >
+        <apex:actionFunction name="generateNewVar" action="{!newVar}" reRender="theForm">
+            <apex:param id="envVar" name="envVar" value="" assignTo="{!newEnvVarName}"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="doDelete" immediate="true" action="{!doDelete}" reRender="theForm">     
+            <apex:param id="varName" name="varName" value="" assignTo="{!deleteVarName}"/>
+        </apex:actionFunction>
+        <apex:sectionHeader title="{!$ObjectType.copado__Environmental_Variable__c.LabelPlural}" subtitle="{!copado__Deployment_Flow__c.Name}" description="Manage Environment Variables"/>
+        <apex:pageMessages id="pmessages" escape="false"/>
+        <apex:pageBlock id="pbEnvVars" title="Environment Variables">
+            <apex:pageBlockButtons id="pbButtons">
+                <apex:commandLink onclick="promptVarName(); return false;" style="text-decoration: none;" reRender="XXX">               
+                    <apex:commandButton value="{!$Label.copado__new}" disabled="{!editing}"/>
+                </apex:commandLink>
+                <apex:commandButton action="{!editModeOn}" value="{!$Label.copado__edit}" reRender="theForm" disabled="{!editing}"/>
+                <apex:commandButton immediate="true" action="{!cancel}" value="{!$Label.copado__cancel}"  reRender="theForm" disabled="{!NOT(editing)}"/>
+                <apex:commandButton action="{!save}" value="{!$Label.copado__save}" disabled="{!NOT(editing)}"/>
+            </apex:pageBlockButtons>
+            <table class="full-width list" id="tblData" border="0" cellspacing="0" cellpadding="0">
+                <tr class="headerRow">
+                    <th style="width: 30px;">Action</th>
+                    <apex:repeat id="variableNames" value="{!EnvNames}" var="envname">
+                        <th class="{!IF(envname='Name', '', IF(CONTAINS(envname, ' - CI'),'env CI','env'))}">{!envname}</th>
+                    </apex:repeat>
+                </tr>
+                <apex:repeat id="variablesValues" value="{!Lmenv}" var="mev">
+                <tr class="dataRow">
+                    <td class="actionColumn">
+                    <apex:commandLink id="delete"  onclick="deleteByName('{!mev.meName}'); return false;" styleClass="actionLink">
+                        Del
+                    </apex:commandLink>
+                    </td>
+                    <td class="dataCell">
+                        <apex:inputText id="name" value="{!mev.meName}" styleClass="full-width" rendered="{!editing}"/>
+                        <apex:outputText value="{!mev.meName}" styleClass="full-width" rendered="{!NOT(editing)}"/>
+                    </td>
+                    <apex:repeat value="{!mev.LmanagedEnvVar}" var="itemVar">
+                        <td class="dataCell">                
+                            <apex:inputField id="value" value="{!itemVar.copado__Value__c}" styleClass="full-width" rendered="{!editing}" required="true"/>
+                            <!-- <apex:outputField value="{!itemVar.Environment__r.Name}" styleClass="full-width"/> -->
+                            <apex:outputField value="{!itemVar.copado__Value__c}" styleClass="full-width" rendered="{!NOT(editing)}"/>
+                        </td>
+                    </apex:repeat>
+                </tr>
+                </apex:repeat>
+            </table>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,82 @@
+<apex:page showHeader="false" sidebar="false" controller="copado.StaticCodeAnalysisController" id="SCApage" action="{!processFileFromVF}" readOnly="true">
+	<head>
+      <c:GAnalytics />
+      <script>
+          ga('send', 'pageview', {
+            'page': '/StaticCodeAnalysisSummary',
+            'title': 'Static Code Analysis Summary'
+          });
+      </script>   
+      <apex:slds />
+    </head>
+    <apex:form id="theForm">
+    	<img src="https://copado.secure.force.com/resource/1430211820000/WebsitePack/Images/CopadoLogo.png" height="50px"/>
+        <div style="margin-left: 15px">
+	        <h2>{!$Label.STATIC_CODE_ANALYSIS_DETAILS}</h2>
+	        <apex:outputLabel style="font-weight: bold;" value="{!$Label.copado__analysis_score}"/>: &nbsp;<apex:outputField label="{!$Label.copado__analysis_score}" value="{!sca.copado__Score__c}"/><br/>
+	       	<apex:outputLabel style="font-weight: bold;" value="{!$Label.copado__rules_violated}"/>: &nbsp;<apex:outputField label="{!$Label.copado__rules_violated}" value="{!sca.copado__Rules_Violated__c}"/>
+       	</div>
+       	<apex:pageMessages id="pmessages" escape="false"/>
+        <br/><br/>
+        <table class="slds-table slds-table_bordered slds-table_fixed-layout" id="tblData">
+        	<thead>
+                <tr>
+                    <th scope="col" style="width:15rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__file}">{!$Label.copado__file}</div>
+                    </th>
+                    <th scope="col" style="width:3rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__line}">{!$Label.copado__line}</div>
+                    </th>
+                    <th scope="col" style="width:10rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__rule}">{!$Label.copado__rule}</div>
+                    </th>
+                    <th scope="col" style="width:3rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__priority}">{!$Label.copado__priority}</div>
+                    </th>
+                    <th scope="col" style="width:40rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__message}">{!$Label.copado__message}</div>
+                    </th>
+                    <th scope="col" style="width:5rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__info_url}">{!$Label.copado__info_url}</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat id="SCAresults" value="{!scaDetails}" var="detail">
+                <tr>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!detail.file}">
+                        	<apex:outputText value="{!detail.file}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!detail.line}">
+                        	<apex:outputText value="{!detail.line}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!detail.rule}">
+                        	<apex:outputText value="{!detail.rule}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!detail.priority}">
+                        	<apex:outputText value="{!detail.priority}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                        <div class="slds-truncate" title="{!detail.message}">
+                        	<apex:outputText value="{!detail.message}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+						<a href="{!detail.infoURL}">
+							<img src="/img/msg_icons/info32.png"/>
+						</a>
+                    </td>
+                </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:form>
+</apex:page>

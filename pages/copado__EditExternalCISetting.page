@@ -1,0 +1,82 @@
+<apex:page showHeader="true" sidebar="true" standardController="copado__External_CI_Setting__c" extensions="copado.EditExternalCISetting" title="{!$Label.site.edit} {!$ObjectType.copado__External_CI_Setting__c.Label}">
+<apex:pageMessages id="theMessages"/>	
+	<html>
+		<head>
+		<apex:slds />
+		<c:GAnalytics />
+		</head>
+		<body  class="slds-scope">
+			<apex:form id="form" rendered="{!AND(showOptions,!showError)}">
+				<!--<apex:sectionHeader title="{!$ObjectType.External_CI_Setting__c.Label} {!$Label.EDIT}" subtitle="{!IF(ISBLANK(externalCISetting.Name),'New '+ $ObjectType.External_CI_Setting__c.Label ,externalCISetting.Name)}" description="{!$Label.EXTERNAL_CI_SETTING_DESC}"/>
+				<apex:pageMessages id="theMessages"/>-->
+
+				<div class="slds-page-header">
+					<div class="slds-grid">
+						<div class="slds-col slds-has-flexi-truncate">
+							<div class="slds-media">
+							    <div class="slds-media__figure">
+							        <span class="slds-icon_container slds-icon-standard-opportunity" title="Description of icon when needed">
+								        <svg class="slds-icon" aria-hidden="true">
+								        	<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/standard-sprite/svg/symbols.svg#custom_notification')}"></use>
+								        </svg>
+							        </span>
+							    </div>
+							    <div class="slds-media__body">
+							    	<p class="slds-text-heading--label slds-line-height--reset">{!$ObjectType.External_CI_Setting__c.Label}</p>
+							        <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="{!$ObjectType.External_CI_Setting__c.Label} {!$Label.EDIT}">{!externalCISetting.Name} {!$Label.EDIT}</h1>
+							    </div>
+							  </div>
+					  </div>
+					  <!-- ACTION BUTTONS -->
+						<div class="slds-col slds-no-flex slds-grid slds-align-top ">
+						  <div class="slds-button-group" role="group">
+						  	<apex:commandButton value="{!$Label.site.save}" styleClass="slds-button slds-button_success" action="{!save}" />
+						    <apex:commandButton value="{!$Label.site.cancel}" action="{!cancel}" styleClass="slds-button slds-button--neutral" reRender="xxx"/>
+						  </div>
+						</div>
+						<!-- / ACTION BUTTONS -->
+					</div>
+				</div>
+				<fieldset class="slds-box slds-theme--default slds-container--fluid">
+					<legend id="newaccountform" class="slds-text-heading--medium " style="padding-top: 10px;">
+						{!IF(ISBLANK(externalCISetting.Name),'New '+ $ObjectType.External_CI_Job__c.Label ,externalCISetting.Name)}
+					</legend>
+					
+					<form class="slds-form--stacked">
+						<div class="slds-grid">
+							<div class="slds-col" >
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="true" Field="Name"></c:LightningReadyInputFields>								
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="true" Field="CI_Tool__c"></c:LightningReadyInputFields>
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="true" Field="Endpoint__c"></c:LightningReadyInputFields>
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="true" Field="Username__c"></c:LightningReadyInputFields>
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="false" Field="API_Token__c" inputSecret="true"></c:LightningReadyInputFields>
+								<c:LightningReadyInputFields SObject="{!externalCISetting}" requiredView="true" Field="Password__c" inputSecret="true"></c:LightningReadyInputFields>
+							</div>
+						</div>
+					</form>	
+				</fieldset>
+
+				<!--<apex:pageBlock id="pb_editSetting"  mode="edit">
+					<apex:pageblockButtons >
+		                <apex:commandButton value="{!$Label.site.save}" styleClass="btnImportant" action="{!save}" />
+		                <apex:commandButton value="{!$Label.site.cancel}" action="{!cancel}" />
+		            </apex:pageblockButtons>
+		            <apex:pageBlockSection id="pbsMain" columns="1">
+		            	<apex:inputField id="name" value="{!externalCISetting.Name}" required="true"/>
+		            	<apex:inputField id="ciType" value="{!externalCISetting.CI_Tool__c}" required="true"/>
+		            	<apex:inputField id="ciEndPoint" value="{!externalCISetting.Endpoint__c}" required="true" style="width:90%;"/>
+		            	<apex:inputField id="ciUserName" value="{!externalCISetting.Username__c}" required="true"/>
+		            	<apex:pageBlockSectionItem >
+			            	<apex:outputLabel value="{!$ObjectType.External_CI_Setting__c.fields.API_Token__c.Label}" />
+			            	<apex:outputPanel styleClass="requiredInput" layout="block" id="mandatoryTokenPanel" >
+			                   <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+			                   <apex:inputSecret value="{!externalCISetting.API_Token__c}" required="true" />
+			               </apex:outputPanel>
+		               </apex:pageBlockSectionItem>
+		            	<apex:inputSecret id="ciPassword" value="{!externalCISetting.Password__c}" required="false"/>
+		            </apex:pageBlockSection>
+				</apex:pageBlock>-->
+			</apex:form>
+		</body>
+	</html>
+</apex:page>

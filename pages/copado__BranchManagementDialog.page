@@ -1,0 +1,1139 @@
+<apex:page showHeader="false" sidebar="false" standardController="copado__Deployment_Flow__c" extensions="copado.BranchManagementExtension,copado.Settings,copado.FeatureHelper,copado.JsRemotingController">
+    <apex:stylesheet value="{!URLFOR($Resource.copado__Statics,'css/DiffView.css')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics, 'js/difflib.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics, 'js/diffview.js')}"></script>
+
+<script>
+    function openModal(elem) {
+        window.setTimeout(lock, 5); // to force redrawing.
+
+        var stepId = $copado(elem).attr('data-flowStepId');
+        
+        backDeploy.processAttachments('openModal', stepId);
+
+        backDeploy.uiData = backDeploy.uiData || {};
+        backDeploy.uiData.fromEnvId = $copado(elem).attr('data-from');
+        backDeploy.uiData.toEnvId = $copado(elem).attr('data-to');
+        backDeploy.uiData.envId = $copado(elem).attr('data-envId');
+        backDeploy.uiData.type = $copado(elem).attr('data-type');
+        backDeploy.uiData.stepId = stepId;
+        backDeploy.uiData.flowId = $copado(elem).attr('data-flowId');
+        backDeploy.uiData.flowResult = JSON.stringify(backDeploy.data.results[backDeploy.uiData.flowId]);
+        backDeploy.uiData.stepResult = JSON.stringify(backDeploy.data.results[backDeploy.uiData.stepId]);
+        backDeploy.uiData.toBranch = $copado('#wrapper_' + backDeploy.uiData.toEnvId).attr('data-branch');
+        backDeploy.uiData.fromBranch = $copado('#wrapper_' + backDeploy.uiData.fromEnvId).attr('data-branch');
+        console.assert(backDeploy.uiData.fromEnvId, 'backDeploy.uiData.fromEnvId' );
+        console.assert(backDeploy.uiData.toEnvId, 'backDeploy.uiData.toEnvId' );
+        console.assert(backDeploy.uiData.toBranch, 'backDeploy.uiData.toBranch' );
+        console.assert(backDeploy.uiData.fromBranch, 'backDeploy.uiData.fromBranch' );
+
+        prepareOverlay(backDeploy.uiData.fromEnvId, backDeploy.uiData.toEnvId, backDeploy.uiData.envId, backDeploy.uiData.type, backDeploy.uiData.stepId, backDeploy.uiData.flowId, backDeploy.uiData.flowResult, backDeploy.uiData.stepResult);
+
+        return false;
+    };
+
+    function showModal() {
+        setTimeout(function() {
+            $copado('#backdrop').addClass('slds-backdrop--open');
+            $copado('#modal').addClass('slds-fade-in-open');
+            unlock();
+        }, 500);
+    };
+
+    function showLogsModal(elem) {
+        setTimeout(function() {
+            $copado('#logsBackdrop').addClass('slds-backdrop--open');
+            $copado('#logsModal').addClass('slds-fade-in-open');
+            unlock();
+        }, 500);
+    };
+
+    function showFileModal(elem) {
+        backDeploy.diff.showDiff(elem);
+        setTimeout(function() {
+            $copado('#fileBackdrop').addClass('slds-backdrop--open');
+            $copado('#fileModal').addClass('slds-fade-in-open');
+            unlock();
+        }, 500);
+    };
+    //Modal Close
+    function closeModal() {
+        $copado('#modal').removeClass('slds-fade-in-open');
+        $copado('#backdrop').removeClass('slds-backdrop--open');
+        resetModalDOM();
+        return false;
+    }
+
+    function closeFileModal() {
+        $copado('#fileModal').removeClass('slds-fade-in-open');
+        $copado('#fileBackdrop').removeClass('slds-backdrop--open');
+        //resetModalDOM();
+        return false;
+    }
+
+    function closeLogsModal() {
+        $copado('#logsModal').removeClass('slds-fade-in-open');
+        $copado('#logsBackdrop').removeClass('slds-backdrop--open');
+        //resetModalDOM();
+        return false;
+    }
+
+    function syncCommits() {
+        
+        var a = backDeploy.uiData.fromEnvId, b = backDeploy.uiData.toEnvId;
+        console.debug("syncCommits()",a,b);
+        // If it is a pull (so, a syncback), we need to invert the "fromEnvId-toEnvId" key
+        /*if(backDeploy.uiData.type === 'pull') {
+            a = backDeploy.uiData.toEnvId;
+            b = backDeploy.uiData.fromEnvId;
+        }*/
+        var jobDidStart = backDeploy.callHerokuAction(a, b, backDeploy.uiData.type);
+        if(jobDidStart) {
+            var att = globalJobsManagerStart(backDeploy.data.flowId, 'gitBranchSync', 'GIT-'+copadoApp.data.repositoryId+'-'+backDeploy.uiData.toBranch);
+            closeModal();
+        }
+    }
+
+    function renderSVGArrow() {
+        var imageURL = "{!JSENCODE(URLFOR($Resource.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#forward'))}";
+        var imageURL2 = "{!JSENCODE(URLFOR($Resource.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#upload'))}";
+        var SVG = $copado('<svg/>', {
+            class: 'slds-button__icon slds-button__icon_left',
+        });
+
+        var SVGUse = $copado('<use/>');
+        SVGUse.attr('xlink:href', imageURL);
+        $copado('[Id$=createPromotion]').prepend(SVG.append(SVGUse));
+        $copado('[Id$=createPromotion]').html($copado('[Id$=createPromotion]').html());
+
+        SVGUse.attr('xlink:href', imageURL2);
+        $copado('[Id$=createPromotionAndDeploy]').prepend(SVG.append(SVGUse));
+        $copado('[Id$=createPromotionAndDeploy]').html($copado('[Id$=createPromotionAndDeploy]').html());
+    }
+
+    function renderSVGFlow() {
+        var imageURL = "{!JSENCODE(URLFOR($Resource.SLDS, '/assets/icons/action-sprite/svg/symbols.svg#flow'))}";
+        var SVG = $copado('<svg/>', {
+            class: 'slds-button__icon slds-button__icon_left',
+        });
+
+        var SVGUse = $copado('<use/>');
+        SVGUse.attr('xlink:href', imageURL);
+        $copado('#btn_sync').prepend(SVG.append(SVGUse));
+        $copado('#btn_sync').html($copado('#btn_sync').html());
+    }
+
+    function reRenderFromContextSelector(obj, type) {
+        backDeploy.config.contextSize = parseInt(obj.value);
+        backDeploy.diff.renderDiff(type);
+        $copado('.js-context').val(obj.value);
+    }
+
+    function reRenderFromRenderOption(obj, type) {
+        backDeploy.config.viewType = parseInt(obj.value);
+        backDeploy.diff.renderDiff(type);
+        $copado('.js-viewType').val(obj.value);
+    }
+
+    function bindSelectAll() {
+        $copado('#selectAll').on('change', function(e) {
+            var table = $copado(e.target).closest('table');
+            $copado('td input:checkbox', table).prop('checked', $copado(this).prop('checked'));
+        });
+    }
+
+    function bindLookupChanges() {
+        if ($copado('[data-id$=promotionProject]').val() != '') {
+            $copado('[data-id$=promotionRelease]').attr('disabled', true);
+
+        } else if ($copado('[data-id$=promotionRelease]').val() != '') {
+            $copado('[data-id$=promotionProject]').attr('disabled', true);
+        }
+
+        $copado('[data-id$=promotionProject]').on('change', function(e) {
+            console.log('Project selection changed');
+            lock();
+            getUserStories();
+        });
+
+
+        $copado('[data-id$=promotionRelease]').on('change', function(e) {
+            console.log('Release selection changed');
+            lock();
+            getUserStories();
+        });
+    }
+
+    backDeploy.bindings.bindMergeErrorShowDiff = function() {
+        $copado('#div-m-eFileList').off('click');
+        $copado('#div-m-eFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff); //, {type:'merge'}
+    };
+    backDeploy.bindings.bindPullErrorShowDiff = function() {
+        $copado('#div-p-eFileList').off('click');
+        $copado('#div-p-eFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff); //, {type:'merge'}
+    };
+    backDeploy.bindings.bindMergeMergedShowDiff = function() {
+        $copado('#div-m-mFileList').off('click');
+        $copado('#div-m-mFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff); //, {type:'merge'}
+    };
+    backDeploy.bindings.bindPullMergedShowDiff = function() {
+        $copado('#div-p-mFileList').off('click');
+        $copado('#div-p-mFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff); //, {type:'merge'}
+    };
+    backDeploy.bindings.bindbehindShowDiff = function() {
+        $copado('#behindFileList').off('click');
+        $copado('#behindFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff);
+    };
+    backDeploy.bindings.bindaheadShowDiff = function() {
+        $copado('#aheadFileList').off('click');
+        $copado('#aheadFileList').on('click', '.js-show-diff', backDeploy.diff.showDiff);
+    };
+    backDeploy.bindings.bindActions = function() {
+        backDeploy.bindings.bindbehindShowDiff();
+        backDeploy.bindings.bindaheadShowDiff();
+        backDeploy.bindings.bindPullErrorShowDiff();
+        backDeploy.bindings.bindMergeErrorShowDiff();
+    };
+
+
+    // DIFF namespace
+    backDeploy.diff.getDiffIndex = function(obj, type) {
+        if (obj) {
+            if (type == 'pull' && obj && obj.filesMergedBehind && obj.filesMergedBehind.length > 0) return obj.filesMergedBehind;
+            if (type == 'merge' && obj && obj.filesMergedAhead && obj.filesMergedAhead.length > 0) return obj.filesMergedAhead;
+        }
+        return [];
+    };
+    backDeploy.diff.getDivId = function(type) {
+        var divId = '';
+        if (type == 'pull') divId = 'behind';
+        if (type == 'merge') divId = 'ahead';
+        if (type == 'div-p-m' || type == 'div-p-e') divId = type;
+        if (type == 'div-m-m' || type == 'div-m-e') divId = type;
+        return divId;
+    };
+
+    /**
+     * get attachment, unzip content 
+     * then search the file name (this must be full relative name)
+     * finally returns file content as text
+     * @param  {[type]} fileName   [description]
+     * @param  {[type]} attachName [description]
+     * @param  {[type]} parentId   [description]
+     * @return {[type]}            [description]
+     */
+    backDeploy.diff.getZippedFileContentByName = function(fileName, attachName, parentId) {
+        var att = null;
+        try {
+            if (fileName == '') {
+                alert('A filename was not selected to be retrieved from the Zip file.');
+                return '';
+            }
+            att = JsRemoting.attachments.getAttachmentByFileName(parentId, attachName);
+            if (!att.length)
+                return '';
+            if(!att[0].Body)
+                return '';
+            var zip = new JSZip(att[0].Body, {
+                base64: true
+            });
+            var content = zip.file(fileName);
+            if(content===null) {
+                console.error(attachName, "the content was not parsed by the zip library");
+                return '';
+            }
+            return content.asText();
+        } catch (error) {
+            console.error(attachName, error);
+            unlockScreen();
+            alert(error);
+            return '';
+        }
+    };
+
+    /**
+     * This method should recover the source and destination zips
+     * then uncompress it 
+     * and finally call show detailed diff popup
+     * @return {[type]} [description]
+     */
+    backDeploy.diff.showDiff = function(elem) {
+        console.log('show diff started ...');
+        //setLockScreenMessage(backDeploy.labels.LOADING);
+        //lockScreen();
+        setLockScreenMessage('Loading diff information...');
+        try {
+            $el = $copado(elem);
+            setTimeout(function() {
+                backDeploy.diff.retrieveContent($el)
+            }, 33);
+        } catch (error) {
+            console.error(error);
+            unlockScreen();
+            alert(error);
+        }
+    };
+
+    /**
+     * helper to avoid ui render engine freeze
+     * @return {[type]} [description]
+     */
+    backDeploy.diff.retrieveContent = function($el) {
+        //recover file name from event
+        var me = backDeploy;
+        //recover first string from wrapper div
+        //fileName = $el.parent().text().replace('Show Differences','');    
+        fileName = $el.attr('file-name');
+        var type = $el.attr('data-type');
+        me.data.FlowStepPressed = $el.attr('data-stepId');
+        console.info('retrieving content with type...',type);
+        if (type == 'merge') {
+            console.log('Unzip merge content...');
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, type + 'Source.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, type + 'Destination.zip', me.data.FlowStepPressed);
+        } else if (type == 'pull') {
+            console.log('Unzip pull content...');
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, type + 'Destination.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, type + 'Source.zip', me.data.FlowStepPressed);
+        } else if (type == 'div-p-m') {
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, 'pullMerged.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, 'pullSource.zip', me.data.FlowStepPressed);
+        } else if (type == 'div-m-m') {
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, 'mergeMerged.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, 'mergeDestination.zip', me.data.FlowStepPressed);
+        } else if (type == 'div-p-e') {
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, 'pullConflicts.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, 'mergeConflicts.zip', me.data.FlowStepPressed);
+        } else if (type == 'div-m-e') {
+            me.config.leftContent = me.diff.getZippedFileContentByName(fileName, 'mergeConflicts.zip', me.data.FlowStepPressed);
+            me.config.rightContent = me.diff.getZippedFileContentByName(fileName, 'pullConflicts.zip', me.data.FlowStepPressed);
+        } else {
+            console.warn('backDeploy.diff.retrieveContent type not found', type);
+        }
+        me.diff.renderDiff(type);
+    };
+
+    backDeploy.diff.renderDiff = function(type) {
+        console.log('start rendering...');
+        var byId = function(id) {
+                return document.getElementById(id);
+            },
+            baseText = difflib.stringAsLines(backDeploy.config.leftContent),
+            newText = difflib.stringAsLines(backDeploy.config.rightContent),
+            sm = new difflib.SequenceMatcher(baseText, newText),
+            opcodes = sm.get_opcodes(),
+            diffoutputdiv = $copado('div[id="' + backDeploy.diff.getDivId(type) + 'DiffWrapper"]')[0];
+
+
+        diffoutputdiv.innerHTML = '';
+
+        console.log('drawing content...');
+        diffoutputdiv.appendChild(diffview.buildView({
+            baseTextLines:  baseText ,
+            newTextLines: newText,
+            opcodes: opcodes,
+            baseTextName:  backDeploy.uiData.fromBranch,
+            newTextName:  backDeploy.uiData.toBranch,
+            contextSize: backDeploy.config.contextSize,
+            viewType: backDeploy.config.viewType,
+        }));
+
+        if (type == 'merge') {
+            $copado('#div-ah-diff').show();
+            $copado('#div-m-m').hide();
+            $copado('#div-bh-diff').hide();
+            $copado('#div-p-m').hide();
+        } else if (type == 'pull') {
+            $copado('#div-m-m').hide();
+            $copado('#div-ah-diff').hide();
+            $copado('#div-p-m').hide();
+            $copado('#div-bh-diff').show();
+        }else if(type == 'div-m-m'){
+            $copado('#div-p-m').hide();
+            $copado('#div-bh-diff').hide();
+            $copado('#div-ah-diff').hide();
+            $copado('#div-m-m').show();
+        }
+        else if(type == 'div-p-m'){
+            $copado('#div-m-m').hide();
+            $copado('#div-bh-diff').hide();
+            $copado('#div-ah-diff').hide();
+            $copado('#div-p-m').show();
+        }
+        var $head = $copado('#fileModalHeading');
+        if ($head) {
+            var branchName =  backDeploy.uiData.fromBranch+
+             ' vs. ' +
+              backDeploy.uiData.toBranch;
+            $head.text(branchName);
+        }
+        setLockScreenMessage('');
+    };
+
+</script>
+
+<apex:form >
+
+    <apex:actionFunction name="prepareOverlay" action="{!prepareOverlay}" reRender="pins,maodalHeader,path,fieldSets,GeneralActionButtons" oncomplete="showModal();">
+        <apex:param name="fromEnvId" value="" />
+        <apex:param name="toEnvId" value="" />
+        <apex:param name="envId" value="" />
+        <apex:param name="type" value="" />
+        <apex:param name="stepId" value="" />
+        <apex:param name="flowId" value="" />
+        <apex:param name="flowResult" value="" />
+        <apex:param name="stepResult" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction name="getUserStories" action="{!getPromotableUserStories}" oncomplete="bindSelectAll();bindLookupChanges();renderSVGArrow();unlock();" reRender="fieldSets,GeneralActionButtons">
+    </apex:actionFunction>
+    <apex:actionFunction name="resetModalDOM" action="{!resetModalsDOM}" reRender="fileModal, modal, logsModal" />
+
+    <div id="operationModal">
+        <section role="dialog" tabindex="-1" id="modal" aria-labelledby="modal-heading-01" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_large">
+            <div class="slds-modal__container" style="width: 99% !important;">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="closeModal();return false;">
+                    <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                        <use
+                            xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}">
+                        </use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                    <apex:outputPanel id="path" layout="block">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate" style="{!IF(latestOverlay.pathType != 'merge','transform: rotate(180deg)','')}">
+                            <!--TODO if back promote apply transform: rotate(180deg); to the style-->
+                            <!--Modal Header Process path-->
+                            <apex:outputPanel id="maodalHeader">
+                                <div class="slds-m-vertical_x-small">
+                                    <div class="slds-grid">
+                                        <div class="slds-tabs--path" role="application">
+                                            <ul class="slds-tabs--path__nav" role="tablist">
+                                                <li class="slds-tabs--path__item slds-is-current" role="presentation">
+                                                    <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                                    <span class="slds-tabs--path__title " style="{!IF(latestOverlay.pathType != 'merge','transform: rotate(180deg)','')}">
+                                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                                            {!latestOverlay.fromEnvName}
+                                                           </apex:outputPanel>
+                                                                                <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                                            {!latestOverlay.toEnvName}
+                                                          </apex:outputPanel>
+                                                    </span>
+                                                </a>
+                                                </li>
+                                                <li class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                                                    <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                                    <span class="slds-tabs--path__title " style="{!IF(latestOverlay.pathType != 'merge','transform: rotate(180deg)','')}">
+                                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                                            {!latestOverlay.toEnvName}
+                                                        </apex:outputPanel>
+                                                                            <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                                            {!latestOverlay.fromEnvName}
+                                                        </apex:outputPanel>
+                                                    </span>
+                                                </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div style="{!IF(latestOverlay.pathType != 'merge','transform: rotate(180deg)','')}">
+                                        <apex:pageMessages id="pageMessages" />
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </h2>
+                    </apex:outputPanel>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="min-height: 85%;">
+                    <apex:outputPanel id="pins" layout="block" styleClass="slds-context-bar slds-is-pinned" style="width: 98%;position: absolute;z-index: 10;margin-top: -17px;overflow-x: scroll; ">
+                        <div class="slds-context-bar__primary slds-context-bar__item_divider-right">
+                            <div class="slds-context-bar__item slds-context-bar__item_divider-right">
+                                <span class="slds-context-bar__label-action slds-context-bar__app-name">
+                                <span class="slds-truncate" title="App Name">CBM Flow Step</span>
+                                </span>
+                            </div>
+                        </div>
+                        <nav class="slds-context-bar__secondary" role="navigation">
+                            <ul class="slds-grid">
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(showUserStories, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showUserStories}" reRender="fieldSets,pins,GeneralActionButtons" onclick="lock();" oncomplete="bindSelectAll();bindLookupChanges();renderSVGArrow();unlock();">
+                                        <span class="slds-truncate">
+                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                            {!$Label.copado__user_stories_ahead} ({!allStorySize})
+                                        </apex:outputPanel>
+                                         <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                            {!$Label.copado__user_stories_behind} ({!allStorySize})
+                                        </apex:outputPanel>
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(showCommits, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showCommits}" oncomplete="renderSVGFlow();bindSelectAll();unlock();" onclick="lock();" reRender="fieldSets,pins,GeneralActionButtons">
+                                        <span class="slds-truncate">
+                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                            {!$Label.copado__commits_ahead} ({!latestOverlay.commitsAhead})
+                                        </apex:outputPanel>
+                                                            <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                            {!$Label.copado__commits_behind} ({!latestOverlay.commitsBehind})
+                                        </apex:outputPanel>
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(AND(latestOverlay.errors.size != null,latestOverlay.errors.size > 0),'font-weight: bolder;','')};{!IF(showErrors, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showErrors}" onclick="lock();" oncomplete="unlock();" reRender="fieldSets,pins,GeneralActionButtons">
+                                        <span class="slds-truncate">
+                                        {!$Label.copado__deployment_errors} ({!latestOverlay.errors.size})
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(showFileDifferences, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink onclick="lock();" oncomplete="unlock();" style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showFileDifferences}" reRender="fieldSets,pins,GeneralActionButtons">
+                                        <span class="slds-truncate">
+                                        {!$Label.copado__file_differences} ({!latestOverlay.fileDifferences.size})
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(showAutoResolves, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink onclick="lock();" oncomplete="unlock();" style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showAutoResolves}" reRender="fieldSets,pins,GeneralActionButtons">
+                                        <span class="slds-truncate">
+                                        {!$Label.copado__auto_resolved_conflicts} ({!latestOverlay.autoResolveds.size})
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                                <li class="slds-context-bar__item slds-context-bar__item_divider-right" style="{!IF(showMergeDifferences, 'background-color: rgb(244,246,249)','')}">
+                                    <apex:commandLink onclick="lock();" oncomplete="unlock();" style="text-decoration:none;" styleClass="slds-context-bar__label-action" action="{!showMergeDifferences}" reRender="fieldSets,pins,GeneralActionButtons">
+                                        <span class="slds-truncate">
+                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                            {!$Label.copado__merged_files} ({!latestOverlay.fileDifferences.size}) <!-- TODO : create label -->
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                            {!$Label.copado__merged_files} ({!latestOverlay.fileDifferences.size})
+                                        </apex:outputPanel>
+                                    </span>
+                                    </apex:commandLink>
+                                </li>
+                            </ul>
+                        </nav>
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="block" id="fieldSets" style="margin-top: 25px;">
+                        <!-- USER STORIES FIELDSET -->
+                        <apex:outputPanel id="userStories" layout="block" rendered="{!showUserStories}">
+                            
+                            <h3 style="font-weight: bolder;">Please select either Project or Release in order to display user stories</h3>
+                            <div class="slds-grid">
+                                <div class="slds-col" style="padding-right: 10px;">
+                                    <label class="slds-form-element__label" for="projectPicklist">
+                                    {!$ObjectType.copado__Promotion__c.fields.copado__Project__c.Label}
+                                </label>
+                                    <apex:selectList id="projectPicklist" html-data-id="promotionProject" value="{!promotion.copado__Project__c}" multiselect="false" size="1" styleClass="slds-select">
+                                        <apex:selectOptions value="{!projects}" />
+                                    </apex:selectList>
+                                </div>
+                                <div class="slds-col" style="padding-left: 10px;">
+                                    <label class="slds-form-element__label" for="releasePicklist">
+                                    {!$ObjectType.copado__Promotion__c.fields.copado__Release__c.Label}
+                                </label>
+                                    <apex:selectList id="releasePicklist" html-data-id="promotionRelease" value="{!promotion.copado__Release__c}" multiselect="false" size="1" styleClass="slds-select">
+                                        <apex:selectOptions value="{!releases}" />
+                                    </apex:selectList>
+                                </div>
+                            </div>
+
+                            <fieldset class="slds-box slds-theme--default slds-container--fluid">
+                                <legend class="slds-text-heading--medium " style="padding-top: 10px;">
+                                    <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType == 'merge',true,false)}">
+                                        {!$Label.copado__user_stories_ahead}
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="none" rendered="{!IF(latestOverlay.pathType != 'merge',true,false)}">
+                                        {!$Label.copado__user_stories_behind}
+                                    </apex:outputPanel>
+                                </legend>
+                                <table class="slds-table slds-table_resizable-cols slds-table_fixed-layout slds-table_bordered slds-table_striped" role="grid" id="userStoriesTable">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th scope="col" class="slds-text-align_right" style="width: 3.25rem;">
+                                                <div class="slds-th__action slds-th__action_form">
+                                                    <span class="slds-checkbox">
+                                                    <input type="checkbox" name="options" id="selectAll" value="on"/>
+                                                    <label class="slds-checkbox__label" for="selectAll">
+                                                        <span class="slds-checkbox_faux"></span>
+                                                    <span class="slds-form-element__label slds-assistive-text">Select All</span>
+                                                    </label>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                            <apex:repeat value="{!$ObjectType.copado__User_Story__c.FieldSets.copado__CBM_Fields}" var="f">
+                                                <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col">
+                                                    <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                    <span class="slds-assistive-text">Sort </span>
+                                                    <span class="slds-truncate" title="Name">{!f.Label}</span>
+                                                    <div class="slds-icon_container">
+                                                        <svg class="slds-icon slds-icon_x-small slds-icon-text-default slds-is-sortable__icon" aria-hidden="true">
+                                                            <use
+                                                                xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}">
+                                                            </use>
+                                                        </svg>
+                                                    </div>
+                                                    <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                                                </a>
+                                                    <div class="slds-resizable">
+                                                        <label for="cell-resize-handle-1" class="slds-assistive-text">{!f.Label} column width</label>
+                                                        <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                        <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                        <span class="slds-resizable__divider"></span>
+                                                        </span>
+                                                    </div>
+                                                </th>
+                                            </apex:repeat>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!latestOverlay.userStories}" var="us" id="userStoryRepeat">
+                                            <tr class="slds-hint-parent">
+                                                <td role="gridcell" class="slds-text-align_right" style="width: 3.25rem;">
+                                                    <apex:inputCheckbox id="checkbox-2" value="{!us.isSelected}" immediate="true" />
+                                                </td>
+                                                <apex:repeat value="{!$ObjectType.copado__User_Story__c.FieldSets.copado__CBM_Fields}" var="f">
+                                                    <td role="gridcell" class="">
+                                                        <div class="slds-truncate" title="{!us.userStory[f]}">
+                                                           <c:LightningReadyOutputFields SObject="{!us.userStory}" Field="{!f}" showLabel="false" dividerBottom="false" customClass="usFields" isViewLink="{!if(f=='Name',true,false)}" htmlTarget="_blank" />
+                                                        </div>
+                                                    </td>
+                                                </apex:repeat>
+                                            </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                                
+                            </fieldset>
+                            <!-- END OF USER STORIES FIELDSET -->
+                        </apex:outputPanel>
+
+                        <!-- COMMITS FIELDSET -->
+                        <apex:outputPanel id="commits" layout="block" rendered="{!showCommits}">
+                            <apex:outputPanel rendered="{!and(!isnull(latestOverlay.commitsAhead), !isnull(latestOverlay.commitsBehind), or(latestOverlay.pathType=='merge'&&latestOverlay.commitsAhead>0, latestOverlay.pathType=='pull'&&latestOverlay.commitsBehind>0))}">
+                                <p>&nbsp;</p>
+                                <p>&nbsp;</p>
+                                <h2 style="text-align: center">{!IF(latestOverlay.errors.size>0,'There are deployment errors, so you cannot sync','The commits are ready to sync')}</h2>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <!-- ERRORS FIELDSET -->
+                        <apex:outputPanel id="deploymentErrors" layout="block" rendered="{!showErrors}">
+                            
+                            <fieldset class="slds-box slds-theme--default slds-container--fluid">
+                                <legend class="slds-text-heading--medium " style="padding-top: 10px;">
+                                    {!$Label.DEPLOYMENT_ERRORS}
+                                </legend>
+                                <table class="slds-table slds-table_resizable-cols slds-table_fixed-layout slds-table_bordered slds-table_striped" role="grid" id="commitsTable">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 7%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Level</span>
+                                            </a>
+
+                                            </th>
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 70%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Message</span>
+                                            </a>
+                                                <div class="slds-resizable">
+                                                    <label for="cell-resize-handle-1" class="slds-assistive-text">Message column width</label>
+                                                    <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                    <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                    <span class="slds-resizable__divider"></span>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 23%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Copado Tip</span>
+                                            </a>
+                                                <div class="slds-resizable">
+                                                    <label for="cell-resize-handle-1" class="slds-assistive-text">Message column width</label>
+                                                    <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                    <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                    <span class="slds-resizable__divider"></span>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!latestOverlay.errors}" var="err">
+                                            <tr class="slds-hint-parent">
+                                                <td role="gridcell" class="">
+                                                    <div class="slds-truncate" title="{!err.Level}">
+                                                        <span style="color: red;font-weight: bolder;">{!err.Level}</span>
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell" class="slds-cell-wrap">
+                                                    <div class="slds-cell-wrap" title="{!err.errorMessage}">
+                                                        {!err.errorMessage}
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell">
+                                                    <div class="slds-truncate" title="{!err.copadoTip}">
+                                                        {!err.copadoTip}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                            <!-- END OF ERRORS FIELDSET -->
+                        </apex:outputPanel>
+                        <!-- FILE DIFFERENCES FIELDSET -->
+                        <apex:outputPanel id="fileDifferences" layout="block" rendered="{!showFileDifferences}" style="min-height: 85%;">
+                            
+                            <fieldset class="slds-box slds-theme--default slds-container--fluid">
+                                <legend class="slds-text-heading--medium " style="padding-top: 10px;">{!$Label.FILE_DIFFERENCES}</legend>
+                                <table class="slds-table slds-table_resizable-cols slds-table_fixed-layout slds-table_bordered slds-table_striped" role="grid" id="commitsTable">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="slds-is-sortable slds-text-title_caps" scope="col" style="width: 10%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Type</span>
+                                            </a>
+
+                                            </th>
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 80%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">File Name</span>
+                                            </a>
+                                                <div class="slds-resizable">
+                                                    <label for="cell-resize-handle-1" class="slds-assistive-text">Message column width</label>
+                                                    <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                    <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                    <span class="slds-resizable__divider"></span>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                            <th class="slds-text-title_caps" scope="col" style="width: 10%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!latestOverlay.fileDifferences}" var="fd">
+                                            <tr class="slds-hint-parent">
+                                                <td role="gridcell" class="">
+                                                    <div class="slds-truncate slds-text-title_caps" title="{!fd.dmlType}">
+                                                        <span style="font-weight: bolder;{!IF(fd.dmlType == 'update', 'color:#e6c611;',IF(fd.dmlType == 'delete','color:#e40a0a;',IF(fd.dmlType == 'create','color:#4bb94b;','')))}">{!fd.dmlType}</span>
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell" class="slds-cell-wrap">
+                                                    <div class="slds-cell-wrap" title="{!fd.metadataName}">
+                                                        {!fd.metadataName}
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell" class="slds-cell-wrap">
+                                                    <apex:outputPanel styleClass="slds-cell-wrap" rendered="{!fd.dmlType == 'update'}">
+                                                        <a href="javascript:void(0);" onclick="showFileModal(this);" data-stepId="{!latestOverlay.stepId}" file-name="{!fd.metadataName}" data-type="{!latestOverlay.pathType}">Show Differences</a>
+                                                    </apex:outputPanel>
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                            <!-- END OF FILE DIFFERENCES FIELDSET -->
+                        </apex:outputPanel>
+                        <!-- AUTO RESOLVED FIELDSET -->
+                        <apex:outputPanel id="autoResolved" layout="block" rendered="{!showAutoResolves}">
+                            
+                            <fieldset class="slds-box slds-theme--default slds-container--fluid">
+                                <legend class="slds-text-heading--medium " style="padding-top: 10px;">{!$label.AUTO_RESOLVED_CONFLICTS}</legend>
+                                <table class="slds-table slds-table_resizable-cols slds-table_fixed-layout slds-table_bordered slds-table_striped" role="grid" id="commitsTable">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="slds-is-sortable slds-text-title_caps" scope="col" style="width: 10%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Type</span>
+                                            </a>
+
+                                            </th>
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 80%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">File Name</span>
+                                            </a>
+                                                <div class="slds-resizable">
+                                                    <label for="cell-resize-handle-1" class="slds-assistive-text">Message column width</label>
+                                                    <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                    <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                    <span class="slds-resizable__divider"></span>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                            <th class="slds-text-title_caps" scope="col" style="width: 10%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!latestOverlay.autoResolveds}" var="fd">
+                                            <tr class="slds-hint-parent">
+                                                <td role="gridcell" class="">
+                                                    <div class="slds-truncate slds-text-title_caps" title="{!fd.dmlType}">
+                                                        <span style="font-weight: bolder;{!IF(fd.dmlType == 'update', 'color:#e6c611;',IF(fd.dmlType == 'delete','color:#e40a0a;',IF(fd.dmlType == 'create','color:#4bb94b;','')))}">{!fd.dmlType}</span>
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell" class="slds-cell-wrap">
+                                                    <div class="slds-cell-wrap" title="{!fd.metadataName}">
+                                                        {!fd.metadataName}
+                                                    </div>
+                                                </td>
+                                                <td role="gridcell" class="slds-cell-wrap">
+                                                    <div class="slds-cell-wrap" title="Show Differences" style="display: none;">
+                                                        <a href="javascript:void(0);" onclick="showFileModal(this);" data-stepId="{!latestOverlay.stepId}" file-name="{!fd.metadataName}" data-type="{!latestOverlay.pathType}">Show Differences</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                            <!-- END OF AUTO RESOLVED FIELDSET -->
+                        </apex:outputPanel>
+                        <!-- MERGED FILES FIELDSET -->
+                        <apex:outputPanel id="mergedFiles" layout="block" rendered="{!showMergeDifferences}">
+                            
+                            <fieldset class="slds-box slds-theme--default slds-container--fluid">
+                                <legend class="slds-text-heading--medium " style="padding-top: 10px;">{!$label.MERGED_FILES}</legend>
+                                <table class="slds-table slds-table_resizable-cols slds-table_fixed-layout slds-table_bordered slds-table_striped" role="grid" id="commitsTable">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="slds-is-sortable slds-text-title_caps" scope="col" style="width: 10%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">Type</span>
+                                            </a>
+
+                                            </th>
+                                            <th class="slds-is-sortable slds-is-resizable slds-text-title_caps" scope="col" style="width: 80%">
+                                                <a href="javascript:void(0);" class="slds-th__action slds-text-link_reset" tabindex="0">
+                                                <span class="slds-assistive-text">Sort </span>
+                                                <span class="slds-truncate" title="Name">File Name</span>
+                                            </a>
+                                                <div class="slds-resizable">
+                                                    <label for="cell-resize-handle-1" class="slds-assistive-text">Message column width</label>
+                                                    <input type="range" min="20" max="1000" class="slds-resizable__input slds-assistive-text" id="cell-resize-handle-1" tabindex="0" />
+                                                    <span class="slds-resizable__handle" draggable="true" onmousedown="CalculateWidth(this, event)" ondrag="SetNewWidth(this, event)" ondragend="return false;">
+                                                    <span class="slds-resizable__divider"></span>
+                                                    </span>
+                                                </div>
+                                            </th>
+                                            <th class="slds-text-title_caps" scope="col" style="width: 10%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!latestOverlay.fileDifferences}" var="fd">
+                                            <apex:outputPanel layout="none" rendered="{!fd.dmlType == 'update'}">
+                                                <tr class="slds-hint-parent">
+                                                    <td role="gridcell" class="">
+                                                        <div class="slds-truncate slds-text-title_caps" title="{!fd.dmlType}">
+                                                            <span style="font-weight: bolder;color:#e6c611;">{!fd.dmlType}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell" class="slds-cell-wrap">
+                                                        <div class="slds-cell-wrap" title="{!fd.metadataName}">
+                                                            {!fd.metadataName}
+                                                        </div>
+                                                    </td>
+                                                    <td role="gridcell" class="slds-cell-wrap">
+                                                        <div class="slds-cell-wrap" title="Show Differences">
+                                                            <a href="javascript:void(0);" onclick="showFileModal(this);" data-stepId="{!latestOverlay.stepId}" file-name="{!fd.metadataName}" data-type="{!IF(latestOverlay.pathType == 'merge','div-m-m','div-p-m')}">Show Differences</a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </apex:outputPanel>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                            <!-- END OF MERGED FILES FIELDSET -->
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+                <!-- Action footer -->
+                <footer class="slds-modal__footer">
+
+
+                    <apex:outputPanel id="GeneralActionButtons" layout="block">
+                        <apex:outputPanel id="promotionButton" layout="none" rendered="{!showUserStories}">
+                            <button class="slds-button slds-button_neutral slds-path__mark-complete slds-m-horizontal_small" onclick="closeModal(); return false;">Cancel</button>
+                            <apex:commandLink rendered="{!allStorySize > 0}" target="_blank" value="Create {!promotionBtnLabel}" styleClass="slds-button slds-button_brand slds-path__mark-complete slds-m-horizontal_small" id="createPromotion" action="{!createPromotion}" reRender="maodalHeader" oncomplete="overridePageMessages();">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                <use
+                                    xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#forward')}">
+                                </use>
+                            </svg>
+                            </apex:commandLink>
+                            <apex:commandLink rendered="{!allStorySize > 0}" target="_blank" value="Create {!promotionBtnLabel} & Deploy" styleClass="slds-button slds-button_success slds-path__mark-complete slds-m-horizontal_small" id="createPromotionAndDeploy" action="{!createPromotionAndDeploy}" reRender="maodalHeader" oncomplete="overridePageMessages();">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                <use
+                                    xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#upload')}">
+                                </use>
+                            </svg>
+                            </apex:commandLink>
+                            <!--<button class="slds-button slds-button_brand slds-path__mark-complete slds-m-horizontal_small" id="createPromotion" onclick="createPromotion();return false;">
+                            
+                        </button>-->
+                        </apex:outputPanel>
+                        <apex:outputPanel id="syncButton" layout="none" rendered="{!showCommits}">
+                            <button class="slds-button slds-button_neutral slds-path__mark-complete slds-m-horizontal_small" onclick="closeModal(); return false;">Cancel</button>
+                            <apex:outputPanel layout="none" rendered="{!and(!isnull(latestOverlay.commitsAhead), !isnull(latestOverlay.commitsBehind), or(latestOverlay.commitsAhead>0, latestOverlay.commitsBehind>0))}">
+
+                                <apex:outputPanel rendered="{!latestOverlay.errors.size<=0}">
+                                    <button style="float: right !important;" class="slds-button slds-button_success slds-path__mark-complete slds-m-horizontal_small" id="btn_sync" onclick="syncCommits(); return false;">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                    <use
+                                        xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/action-sprite/svg/symbols.svg#flow')}">               
+                                    </use>
+                                </svg>
+                                Sync
+                            </button>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!latestOverlay.errors.size>0}">
+                                    <button style="float: right !important;" class="slds-button slds-button_success slds-path__mark-complete slds-m-horizontal_small" id="btn_sync" disabled="disabled">
+                                <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                                    <use
+                                        xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/action-sprite/svg/symbols.svg#flow')}">               
+                                    </use>
+                                </svg>
+                                Sync
+                            </button>
+                                </apex:outputPanel>
+
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop" id="backdrop"></div>
+    </div>
+
+    <!-- FILE DIFF COMPARISON MODAL -->
+    <div id="fileDiffModal">
+        <section role="dialog" tabindex="-1" id="fileModal" aria-labelledby="modal-heading-01" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_large">
+            <div class="slds-modal__container" style="width: 99% !important;">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="closeFileModal();return false;">
+                    <svg class="slds-button__icon slds-button__icon_large slds-icon-text-error" aria-hidden="true">
+                        <use
+                            xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}">
+                        </use>
+                    </svg>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                    <apex:outputPanel id="fileNames" layout="block">
+                        <h2 id="fileModalHeading" class="slds-text-heading_medium slds-hyphenate">
+
+                        </h2>
+                    </apex:outputPanel>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="min-height: 84%;">
+                    <div id="window" style="width:100%">
+                        <div id="windowHeader">
+                            <span></span>
+                        </div>
+                        <div id="windowContent">
+                            <div style="display:none; width:100%; height:100%;" id="div-bh-diff">
+                                <div id="behindFileList" style="width:100%;"></div>
+                                <div class="slds-grid" style="margin-bottom: 10px">
+                                    <div class="slds-grid" style="width: 100%">
+                                        <div class="slds-col">
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-bh" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'pull');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="slds-col">
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-bh" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'pull');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div><br/>
+                                </div>
+                                <div class="slds-grid">
+                                    <div class="slds-col">
+                                        <div id="behindDiffWrapper" style="width:100%; height:100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:none;" id="div-ah-diff">
+                                <div id="aheadFileList"></div>
+                                <div class="slds-grid" style="margin-bottom: 10px">
+                                    <div class="slds-grid" style="width: 100%">
+                                        <div class="slds-col">
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-ah" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'merge');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="slds-col">
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-ah" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'merge');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-grid">
+                                    <div class="slds-col">
+                                        <div id="aheadDiffWrapper"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:none;" id="div-p-e">
+                                <div id="div-p-eFileList"></div>
+                                <apex:pageBlock >
+                                    <apex:pageBlockSection >
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-pe" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'div-p-e');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-pe" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'div-p-e');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                    </apex:pageBlockSection>
+                                    <div id="div-p-eDiffWrapper"></div>
+                                </apex:pageBlock>
+                            </div>
+                            <div style="display:none;" id="div-m-e">
+                                <div id="div-m-eFileList"></div>
+                                <apex:pageBlock >
+                                    <apex:pageBlockSection >
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-me" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'div-m-e');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-me" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'div-m-e');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                    </apex:pageBlockSection>
+                                    <div id="div-m-eDiffWrapper"></div>
+                                </apex:pageBlock>
+                            </div>
+                            <div style="display:none;" id="div-p-v-e"></div>
+                            <div style="display:none;" id="div-p-d-e"></div>
+                            <div style="display:none;" id="div-m-v-e"></div>
+                            <div style="display:none;" id="div-m-d-e"></div>
+                            <div style="display:none;" id="div-p-m">
+                                <div id="div-p-mFileList"></div>
+                                <apex:pageBlock >
+                                    <apex:pageBlockSection >
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-pm" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'div-p-m');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-pm" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'div-p-m');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                    </apex:pageBlockSection>
+                                    <div id="div-p-mDiffWrapper"></div>
+                                </apex:pageBlock>
+                            </div>
+                            <div style="display:none;" id="div-m-m">
+                                <div id="div-m-mFileList"></div>
+                                <apex:pageBlock >
+                                    <apex:pageBlockSection >
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Display Differences</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="viewTypeSelector-mm" class="js-viewType" size="1" onchange="reRenderFromRenderOption(this, 'div-m-m');">
+                                                    <option value="0" label="Side by Side">Side by Side</option>
+                                                    <option value="1" label="Inline">Inline</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                        <apex:pageBlockSectionItem >
+                                            <apex:outputLabel >Context size (optional)</apex:outputLabel>
+                                            <apex:outputPanel >
+                                                <select id="contextSelector-mm" class="js-context" size="1" onChange="reRenderFromContextSelector(this, 'div-m-m');">
+                                                    <option value="1" label="1">1</option>
+                                                    <option value="5" label="5" selected="selected">5</option>
+                                                    <option value="10" label="10">10</option>
+                                                    <option value="15" label="15">15</option>
+                                                </select>
+                                            </apex:outputPanel>
+                                        </apex:pageBlockSectionItem>
+                                    </apex:pageBlockSection>
+                                    <div id="div-m-mDiffWrapper"></div>
+                                </apex:pageBlock>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="closeFileModal(); return false;">Cancel</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop" id="fileBackdrop"></div>
+    </div>
+    <!-- END OF FILE DIFF COMPARISON MODAL -->
+</apex:form>
+</apex:page>

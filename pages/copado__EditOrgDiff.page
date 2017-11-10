@@ -1,0 +1,82 @@
+<apex:page showHeader="true" sidebar="true" standardController="copado__OrgDiff__c" extensions="copado.EditOrgDiffExtension">
+    <head>
+        <c:GAnalytics />
+        <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+        <script> var $copado = jQuery.noConflict(); </script>
+        <style type="text/css">
+        /*to force center multiselect component*/
+        div.duelingListBox{
+            margin-right: auto;
+            margin-left: auto;
+            width: 600px;
+        }
+        </style>
+    </head>    
+	<apex:form >
+	<apex:sectionHeader title="{!$ObjectType.copado__OrgDiff__c.LabelPlural} {!$Label.copado__edit}" subtitle="{!IF(ISBLANK(copado__OrgDiff__c.Name),'New '+ $ObjectType.copado__OrgDiff__c.Label,copado__OrgDiff__c.Name)}" description="{!$Label.copado__org_diff_description}" />
+    <apex:pageMessages />
+	<apex:pageBlock id="pb_viewGitBackup"  mode="edit" helpUrl="http://docs.copa.do/copado/org-differences" helpTitle="{!$Label.copado__help_for_this_page}">
+
+        
+		<apex:pageblockButtons >
+            <apex:commandButton action="{!save}" value="{!$Label.site.save}"/>
+            <apex:commandButton action="{!cancel}" value="{!$Label.site.cancel}"/>
+        </apex:pageblockButtons>
+
+
+       <apex:actionRegion >  
+            <apex:actionFunction action="{!fromOrgChanged}" name="fromOrgChanged" reRender="typesSection" >
+                <apex:param name="fromOrgID" assignTo="{!fromOrgID}" value="" />
+            </apex:actionFunction>
+       </apex:actionRegion>
+
+        <apex:pageBlockSection showHeader="true" title="{!$Label.copado__basic_information}"> 
+            <apex:inputField required="true" value="{!copado__OrgDiff__c.Name}" />
+            <apex:inputField value="{!copado__OrgDiff__c.copado__From_Date__c}" />
+            <apex:inputField required="true" value="{!copado__OrgDiff__c.copado__From_Org__c}"  id="iFromOrg" onchange="reTypes()" />
+            <apex:inputField value="{!copado__OrgDiff__c.copado__To_Date__c}" />
+            <apex:inputField required="true" value="{!copado__OrgDiff__c.copado__To_Org__c}" />
+            <apex:inputField value="{!copado__OrgDiff__c.copado__Last_Modified_By_Name__c}" />
+        </apex:pageBlockSection>
+		<apex:pageBlockSection title="{!$Label.copado__advanced_metadata_filters}" 
+                    collapsible="true"
+                    showHeader="true"
+                    id="typesSection"
+                    columns="1">
+                <apex:pageBlockSectionItem dataStyle="width: 100%;">
+                    <c:MultiselectPicklist leftLabel="{!$ObjectType.copado__OrgDiff__c.fields.copado__Metadata_Types__c.Label}"
+                        pleftOptions="{!types}"
+                        rightLabel="{!$Label.copado__selected_types}"
+                        prightOptions="{!selectedTypes}"
+                        size="14"
+                        width="250px"
+                        id="siTypes"
+                        />
+                </apex:pageBlockSectionItem>
+
+         </apex:pageBlockSection>
+    	
+        <script>
+            //this method is a helper to refresh the from org in the contorller
+            //and rerender the metadataTypes block
+            function reTypes(){
+                // get from hidden lookup's input
+                if( $copado('[id$="iFromOrg_lkid"]').val() != "000000000000000" ){
+                    //set spin
+                    $copado('[id$="siTypes"]').html('<center><img src="/img/loading.gif" /> <i>{!$Label.copado__loading}<span id="retry-label"></span></i></center>');
+                    //controller refresh and later rerender
+                    fromOrgChanged($copado('[id$="iFromOrg_lkid"]').val());
+                }
+            }
+
+           
+        </script>
+    </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel rendered="false">
+    	<apex:outputField value="{!copado__OrgDiff__c.copado__Metadata_Types__c}"/>
+    </apex:outputPanel>
+
+    <c:CheckFeaturesComponent />
+
+</apex:page>

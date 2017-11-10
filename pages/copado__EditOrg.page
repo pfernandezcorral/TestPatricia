@@ -1,0 +1,110 @@
+<apex:page standardController="copado__Org__c" extensions="copado.EditOrg,copado.Settings" title="{!$Label.site.edit} {!$ObjectType.copado__Org__c.Label}" id="thePage">
+  <apex:pageMessages id="theMessages" />
+	<apex:slds />
+    <apex:outputPanel layout="block" rendered="{!AND(showOptions,!showError)}">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <div class="slds-m-horizontal_medium">
+            <head>
+                <c:GAnalytics />
+                
+                <style type="text/css">
+                /*to force center multiselect component*/
+                div.duelingListBox{
+                    margin-right: auto;
+                    margin-left: auto;
+                    width: 600px;
+                }
+                </style>
+            </head>  
+        
+            <span style="display:none;">{!copado__Org__c.copado__Metadata_Types__c}</span>
+        
+            <apex:form id="theForm">
+                <apex:sectionHeader id="sh_org" title="{!$ObjectType.copado__Org__c.Label} {!$Label.copado__edit}" subtitle="{!IF(ISBLANK(org.Name),'New Org',org.Name)}" description="{!$Label.copado__org_edit_description}"/>
+                <apex:pageMessages id="pagesMessages" />
+                <apex:pageBlock id="pb_createOrg"  mode="edit" helpUrl="http://docs.copa.do/copado/creating-a-salesforce-org" helpTitle="{!$Label.copado__help_for_this_page}">
+        
+                    <apex:pageblockButtons id="co_pbb" >
+                        <apex:commandButton id="cb_save" value="{!$Label.site.save}" styleClass="btnImportant" action="{!save}" />
+                        <apex:commandButton id="cb_cancel" value="{!$Label.site.cancel}" action="{!cancel}" />
+                    </apex:pageblockButtons>
+                    <apex:actionRegion id="ar_custom_domain"> 
+                    <apex:pageBlockSection id="pbs1" columns="1" showHeader="true" title="{!$Label.copado__basic_information}">
+                        <apex:inputField id="if_name" value="{!org.Name}" required="true" />
+                        <apex:inputField id="if_username" value="{!org.copado__Username__c}" rendered="{!showUserPass}" />
+                        
+                        <apex:pageBlockSectionItem id="pbsi" rendered="{!showUserPass}">
+                            <apex:outputLabel id="ol_password" value="Password" />
+                            <apex:outputPanel id="op_password_wrap" styleClass="requiredInput" layout="block">
+                                <apex:outputPanel id="op_password" styleClass="requiredBlock" layout="block" />
+                                <apex:inputSecret id="is_password" value="{!org.copado__Password__c}" required="true" />
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        
+                        <apex:inputField id="if_token" value="{!org.copado__Token__c}" rendered="{!showUserPass}" />
+                        <!--<apex:inputField id="if_orgType" value="{!org.copado__Org_Type__c}" onchange="showHideCustomDomain()"/>-->
+                        <apex:selectList id="if_orgType" value="{!org.copado__Org_Type__c}" size="1" onchange="showHideCustomDomain()">
+                            <apex:selectOption itemValue="Production/Developer" itemLabel="Production/Developer"/>
+                            <apex:selectOption itemValue="Sandbox" itemLabel="Sandbox"/>
+                            <apex:selectOption itemValue="Custom Domain" itemLabel="Custom Domain"/>
+                        </apex:selectList>
+                        
+                        <apex:inputField id="if_custom" value="{!org.copado__Custom_Domain__c}"/>
+                        
+                        <apex:inputField id="if_disableValidation" value="{!org.copado__Disable_Validation__c}" />
+                        <apex:inputField id="if_frequency" value="{!org.copado__Test_Frequency__c}" />
+                        <apex:inputField id="if_defaultCredential" value="{!org.copado__Default_Credential__c}" />
+                    </apex:pageBlockSection>
+                        
+                    <apex:actionStatus id="as_custom_domain">
+                                <apex:facet name="start">
+                                    <img class="waitingImage" src="/img/loading.gif" />
+                                </apex:facet>
+                            </apex:actionStatus>
+                            <apex:actionFunction name="changeType" action="{!setUrls}" status="as_custom_domain" rerender="pbs1"/>
+                    </apex:actionRegion>
+        
+                    <apex:pageBlockSection title="{!$Label.copado__advanced_metadata_filters}" 
+                            collapsible="true"
+                            showHeader="true"
+                            id="typesSection"
+                            columns="1"
+                            rendered="{!!isBlank(copado__Org__c.copado__Oauth_Signature__c)}">
+                        <apex:pageBlockSectionItem dataStyle="width: 100%;" rendered="{!!scalableGrid}">
+                            <c:MultiselectPicklist leftLabel="{!$ObjectType.copado__Org__c.fields.copado__Metadata_Types__c.Label}"
+                                pleftOptions="{!types}"
+                                rightLabel="{!$Label.copado__selected_types}"
+                                prightOptions="{!selectedTypes}"
+                                size="14"
+                                width="250px"
+                                id="siTypes"
+                                />
+                        </apex:pageBlockSectionItem>
+        
+                 </apex:pageBlockSection>
+                
+               
+                </apex:pageBlock>
+            </apex:form>
+            <script language="javascript" type="text/javascript">
+        
+                function showHideCustomDomain()
+                {
+                    if (document.getElementById('{!$Component.theForm.pb_createOrg.pbs1.if_orgType}').value == "Custom Domain" )
+                        {
+                            document.getElementById('{!$Component.theForm.pb_createOrg.pbs1.if_custom}').style.display='Inline';
+                         }
+                        else
+                          {
+                            document.getElementById('{!$Component.theForm.pb_createOrg.pbs1.if_custom}').style.display="None";
+                           }
+                    return true;
+               }
+               showHideCustomDomain();
+        
+            </script>
+            <c:CheckFeaturesComponent />
+        </div>
+    </html>
+    </apex:outputPanel>
+</apex:page>

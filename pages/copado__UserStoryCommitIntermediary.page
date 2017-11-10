@@ -1,0 +1,47 @@
+<apex:page docType="html-5.0" standardController="copado__User_Story__c" extensions="copado.UserStoryCommitIntermediaryExt,copado.Settings" id="thePage" sidebar="false" showHeader="false" readOnly="true">
+    
+    <apex:sectionHeader id="theHeader" title="Copado" subtitle="{!$Label.copado__user_story_commit_intm_title}" description="{!$Label.copado__user_story_commit_intm_description}" rendered="{!AND(showOptions, !showError)}"/>
+    
+    <apex:pageMessages id="theMessages" />
+    
+    <apex:outputPanel rendered="{!showError}">
+        <a href="/{!userStory.Id}">{!$Label.copado__return_to_user_story}</a>
+    </apex:outputPanel>
+    
+    <apex:form id="theForm" rendered="{!!showError}">
+        <apex:pageBlock id="pb">
+        	<apex:pageBlockTable id="theTable" value="{!snapshots}" var="s" rendered="{!showOptions}" >
+            	<apex:column id="col1">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.Name.Label}</apex:facet>
+                    <apex:outputLink value="/apex/{!namespace}{!targetPage}?{!additionalParams}snapshotId={!s.Id}&repoId={!s.copado__Git_Repository__c}&orgId={!s.copado__Org__c}&userStoryId={!userStory.Id}">{!s.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column id="col2">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.copado__Git_Repository__c.Label}</apex:facet>
+                    <apex:outputText value="{!s.Git_Repository__r.Name}" />
+                </apex:column>
+                <apex:column id="col3">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.copado__Org__c.Label}</apex:facet>
+                    <apex:outputText value="{!s.Org__r.Name}" />
+                </apex:column>
+                <apex:column id="col4">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.copado__Branch__c.Label}</apex:facet>
+                    <apex:outputField value="{!s.copado__Branch__c}" />
+                </apex:column>
+                <apex:column id="col5">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.copado__Frequency__c.Label}</apex:facet>
+                    <apex:outputField value="{!s.copado__Frequency__c}" />
+                </apex:column>
+                <apex:column id="col6">
+                    <apex:facet name="header">{!$ObjectType.copado__Git_Backup__c.fields.copado__Git_Snapshot_Permissions__c.Label}</apex:facet>
+                    <apex:outputField value="{!s.copado__Git_Snapshot_Permissions__c}" />
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel id="pnlScript" rendered="{!AND(!showOptions, !showError)}">
+        <apex:pageMessage id="redirectMsg" severity="INFO" summary="{!$Label.copado__loading}" />
+        <script>
+        	window.location='/apex/{!JSENCODE(namespace)}{!JSENCODE(targetPage)}?{!JSENCODE(additionalParams)}snapshotId={!JSENCODE(snapshotId)}&repoId={!JSENCODE(repoId)}&orgId={!JSENCODE(orgId)}&userStoryId={!JSENCODE(userStory.Id)}';
+        </script>
+    </apex:outputPanel>
+</apex:page>

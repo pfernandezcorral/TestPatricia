@@ -1,0 +1,79 @@
+<apex:page standardController="copado__Git_Repository__c" extensions="copado.EditGit" title="{!$Label.site.edit} {!$ObjectType.copado__Git_Repository__c.Label}" id="thePage">
+	<c:GAnalytics />
+	<apex:form id="theForm">
+		<apex:sectionHeader title="{!$ObjectType.copado__Git_Repository__c.Label} {!$Label.copado__edit}" subtitle="{!IF(ISBLANK(git.Name),'New '+ $ObjectType.copado__Git_Repository__c.Label ,git.Name)}" description="{!$Label.copado__git_repository_edit_description}"/>
+		<apex:pageMessages id="theMessages"/>
+		<apex:pageBlock id="pb_editGit"  mode="edit" helpUrl="http://docs.copa.do/git-repository" helpTitle="{!$Label.copado__help_for_this_page}" rendered="{!AND(showOptions,!showError)}">
+            <apex:pageblockButtons >
+                <apex:commandButton value="{!$Label.site.save}" styleClass="btnImportant" action="{!save}" />
+                <apex:commandButton value="{!$Label.site.cancel}" action="{!cancel}" />
+            </apex:pageblockButtons>
+            
+            <apex:pageBlockSection id="pbsMain" columns="1">
+                <apex:inputField id="name" value="{!git.Name}" required="true"/>
+                <apex:pageBlockSectionItem id="pbsi_authType">
+                	<apex:outputLabel >Authentication Type</apex:outputLabel>
+                    <apex:selectList id="authType" size="1" multiselect="false" onchange="showHideHttps()">
+                        <apex:selectOption itemValue="ssh" itemLabel="SSH"/>
+                        <apex:selectOption itemValue="https" itemLabel="Https"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:inputField id="uri" value="{!git.copado__URI__c}" required="true" style="width:100%;"/>
+                <apex:pageBlockSectionItem id="pbi_username">
+                    <apex:outputLabel value="{!$ObjectType.copado__Git_Repository__c.Fields.copado__Username__c.Label}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputField id="username" value="{!git.copado__Username__c}" required="false" style="width:100%;"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="pbi_password">
+                    <apex:outputLabel value="{!$ObjectType.copado__Git_Repository__c.Fields.copado__Password__c.Label}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputSecret id="password" value="{!git.copado__Password__c}" required="false" style="width:100%;" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem> 
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="{!$Label.copado__other_information}" rendered="{!showOtherInformation}">
+                <apex:repeat value="{!$ObjectType.copado__Git_Repository__c.FieldSets.copado__CustomFields}" var="f">
+                    <apex:inputField value="{!git[f]}" required="{!OR(f.required, f.dbrequired)}" style="width:100%;"/>
+                </apex:repeat>
+        	</apex:pageBlockSection>
+        </apex:pageBlock>
+	</apex:form>
+    <script language="javascript" type="text/javascript">
+    	var authType = document.getElementById('{!$Component.thePage.theForm.pb_editGit.pbsMain.pbsi_authType.authType}');
+        var uri = document.getElementById('{!$Component.thePage.theForm.pb_editGit.pbsMain.uri}').value;
+        var unField = document.getElementById('{!$Component.thePage.theForm.pb_editGit.pbsMain.pbi_username.username}');
+        var pwField = document.getElementById('{!$Component.thePage.theForm.pb_editGit.pbsMain.pbi_password.password}');
+    	
+        if (typeof String.prototype.startsWith != 'function') {
+            String.prototype.startsWith = function (str){
+                return this.slice(0, str.length) == str;
+            };
+        }
+    
+    	authType.value = (uri.startsWith('http'))?'https':'ssh';
+    	
+        function showHideHttps(){
+            unField.style.display = (authType.value=='ssh'||authType.value=='')?'None':'Inline';
+            pwField.style.display = (authType.value=='ssh'||authType.value=='')?'None':'Inline';
+
+            if(authType.value=='ssh'){
+                unField.value = '';
+                pwField.value = '';
+            }
+            return true;
+        }
+        showHideHttps();
+    </script>
+
+    <apex:outputPanel rendered="false">
+        <!-- Added to make sure that all fields are included in the standard controller record -->
+        <apex:repeat value="{!$ObjectType.copado__Git_Repository__c.FieldSets.copado__CustomFields}" var="f">
+            <apex:outputField value="{!copado__Git_Repository__c[f]}"/>
+        </apex:repeat>
+    </apex:outputPanel>
+
+	<c:CheckFeaturesComponent />
+</apex:page>

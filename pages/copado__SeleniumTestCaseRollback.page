@@ -1,0 +1,37 @@
+<apex:page standardController="copado__Selenium_Test_Case__c" extensions="copado.SeleniumTestCasePromoteRollback" action="{!initRollback}">
+    <c:GAnalytics />
+    <apex:form id="theForm" >
+        <apex:pageMessages id="theMessages" />
+        <apex:outputPanel id="pnlWarning" rendered="{!!showList}">
+            <apex:commandButton id="btnReturn" value="Return to previous page" action="{!cancel}" />
+        </apex:outputPanel>
+        
+        <apex:outputPanel id="pnlSuccess" rendered="{!showList}">
+            <apex:sectionHeader title="{!$Label.copado__rollback_selenium_tc_version}" subtitle="{!copado__Selenium_Test_Case__c.Name}  ({!$Label.copado__tc_replace} {!copado__Selenium_Test_Case__c.copado__Version__c} {!$Label.copado__tc_with} {!copado__Selenium_Test_Case__c.Previous_Version__r.copado__Version__c})"
+                            description="{!$Label.copado__rollback_test_case_description}"/>
+        	<apex:pageBlock mode="edit" id="pb">
+                <apex:pageblockButtons id="pbbs" location="top">
+                    <apex:commandButton value="Done" action="{!cancel}" rendered="{!processIsDone}"/>
+                    <apex:commandButton value="{!$Label.site.save}" styleClass="btnImportant" action="{!promoteOrRollback}" rendered="{!and(!processIsDone, testCasePerSuite.size>0)}"/>
+                    <apex:commandButton value="{!$Label.site.cancel}" action="{!cancel}" rendered="{!!processIsDone}"/>
+                </apex:pageblockButtons>
+                <apex:pageBlockTable id="pbt" value="{!testCasePerSuite}" var="pv" rendered="{!testCasePerSuite.size>0}">
+                    <apex:column >
+                        <apex:inputCheckbox value="{!pv.selected}"/>
+                    </apex:column>
+                     <apex:column value="{!pv.tcs.Name}"/>
+                    <apex:column value="{!pv.tcs.Selenium_Test_Suite__r.Name}"/>
+                    <apex:column value="{!pv.tcs.Selenium_Test_Case__r.Name}"/>
+                    <apex:column value="{!pv.tcs.Selenium_Test_Case__r.copado__Version__c}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+    
+    <script>
+        ga('send', 'pageview', {
+          'page': '/SeleniumTestCaseRollback',
+          'title': 'Selenium Test Case Rollback'
+        });
+    </script>
+</apex:page>

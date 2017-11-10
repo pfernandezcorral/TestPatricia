@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <label><!-- Acceptance Criteria Status --></label>
+        <name>copado__Acceptance_Criteria_Status__c</name>
+        <picklistValues>
+            <masterLabel>Accepted</masterLabel>
+            <translation><!-- Accepted --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Draft</masterLabel>
+            <translation><!-- Draft --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Rejected</masterLabel>
+            <translation><!-- Rejected --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Acceptance Criteria --></label>
+        <name>copado__Acceptance_Criteria__c</name>
+    </fields>
+    <fields>
+        <label><!-- Apex Code Coverage --></label>
+        <name>copado__Apex_Code_Coverage__c</name>
+    </fields>
+    <fields>
+        <label><!-- Business Analyst --></label>
+        <name>copado__Business_Analyst__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Cancellation Reason --></label>
+        <name>copado__Cancellation_Reason__c</name>
+    </fields>
+    <fields>
+        <label><!-- Classes Without Coverage --></label>
+        <name>copado__Classes_Without_Coverage__c</name>
+    </fields>
+    <fields>
+        <label><!-- Close Date --></label>
+        <name>copado__Close_Date__c</name>
+    </fields>
+    <fields>
+        <label><!-- Compliance Criteria --></label>
+        <name>copado__Compliance_Criteria__c</name>
+    </fields>
+    <fields>
+        <label><!-- Compliance --></label>
+        <name>copado__Compliance__c</name>
+    </fields>
+    <fields>
+        <label><!-- Data Privacy --></label>
+        <name>copado__Data_Privacy__c</name>
+    </fields>
+    <fields>
+        <label><!-- Developer --></label>
+        <name>copado__Developer__c</name>
+        <relationshipLabel><!-- User Stories (Developer) --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Environment --></label>
+        <name>copado__Environment__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Epic --></label>
+        <name>copado__Epic__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <help><!-- If checked, this user story will not be included in the count of user stories ahead and behind. --></help>
+        <label><!-- Exclude From CBM --></label>
+        <name>copado__Exclude_From_CBM__c</name>
+    </fields>
+    <fields>
+        <label><!-- Failing Methods --></label>
+        <name>copado__Failing_Methods__c</name>
+    </fields>
+    <fields>
+        <label><!-- Functional Specifications --></label>
+        <name>copado__Functional_Specifications__c</name>
+    </fields>
+    <fields>
+        <label><!-- Has Apex Code --></label>
+        <name>copado__Has_Apex_Code__c</name>
+    </fields>
+    <fields>
+        <label><!-- Legal --></label>
+        <name>copado__Legal__c</name>
+    </fields>
+    <fields>
+        <label><!-- Metadata Types in Selection --></label>
+        <name>copado__Metadata_Types_in_Selection__c</name>
+        <picklistValues>
+            <masterLabel>ActionLinkGroupTemplate</masterLabel>
+            <translation><!-- ActionLinkGroupTemplate --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AnalyticSnapshot</masterLabel>
+            <translation><!-- AnalyticSnapshot --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ApexClass</masterLabel>
+            <translation><!-- ApexClass --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ApexComponent</masterLabel>
+            <translation><!-- ApexComponent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ApexPage</masterLabel>
+            <translation><!-- ApexPage --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ApexTrigger</masterLabel>
+            <translation><!-- ApexTrigger --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AppMenu</masterLabel>
+            <translation><!-- AppMenu --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ApprovalProcess</masterLabel>
+            <translation><!-- ApprovalProcess --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AssignmentRule</masterLabel>
+            <translation><!-- AssignmentRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AssignmentRules</masterLabel>
+            <translation><!-- AssignmentRules --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AuraDefinitionBundle</masterLabel>
+            <translation><!-- AuraDefinitionBundle --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AuthProvider</masterLabel>
+            <translation><!-- AuthProvider --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AutoResponseRule</masterLabel>
+            <translation><!-- AutoResponseRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>AutoResponseRules</masterLabel>
+            <translation><!-- AutoResponseRules --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>BusinessProcess</masterLabel>
+            <translation><!-- BusinessProcess --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CallCenter</masterLabel>
+            <translation><!-- CallCenter --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Certificate</masterLabel>
+            <translation><!-- Certificate --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ChannelLayout</masterLabel>
+            <translation><!-- ChannelLayout --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Community</masterLabel>
+            <translation><!-- Community --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CompactLayout</masterLabel>
+            <translation><!-- CompactLayout --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ConnectedApp</masterLabel>
+            <translation><!-- ConnectedApp --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CorsWhitelistOrigin</masterLabel>
+            <translation><!-- CorsWhitelistOrigin --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomApplication</masterLabel>
+            <translation><!-- CustomApplication --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomField</masterLabel>
+            <translation><!-- CustomField --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomLabel</masterLabel>
+            <translation><!-- CustomLabel --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomLabels</masterLabel>
+            <translation><!-- CustomLabels --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomMetadata</masterLabel>
+            <translation><!-- CustomMetadata --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomObject</masterLabel>
+            <translation><!-- CustomObject --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomObjectTranslation</masterLabel>
+            <translation><!-- CustomObjectTranslation --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomPageWebLink</masterLabel>
+            <translation><!-- CustomPageWebLink --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomPermission</masterLabel>
+            <translation><!-- CustomPermission --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomSite</masterLabel>
+            <translation><!-- CustomSite --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>CustomTab</masterLabel>
+            <translation><!-- CustomTab --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Dashboard</masterLabel>
+            <translation><!-- Dashboard --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>DataCategoryGroup</masterLabel>
+            <translation><!-- DataCategoryGroup --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>DelegateGroup</masterLabel>
+            <translation><!-- DelegateGroup --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Document</masterLabel>
+            <translation><!-- Document --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>EmailTemplate</masterLabel>
+            <translation><!-- EmailTemplate --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>EscalationRule</masterLabel>
+            <translation><!-- EscalationRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>EscalationRules</masterLabel>
+            <translation><!-- EscalationRules --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ExternalDataSource</masterLabel>
+            <translation><!-- ExternalDataSource --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>FieldSet</masterLabel>
+            <translation><!-- FieldSet --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>FlexiPaFlow</masterLabel>
+            <translation><!-- FlexiPaFlow --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>FlowDefinitioGroup</masterLabel>
+            <translation><!-- FlowDefinitioGroup --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>HomePageComponent</masterLabel>
+            <translation><!-- HomePageComponent --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>HomePageLayout</masterLabel>
+            <translation><!-- HomePageLayout --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>InstalledPackageLayout</masterLabel>
+            <translation><!-- InstalledPackageLayout --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Letterhead</masterLabel>
+            <translation><!-- Letterhead --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ListView</masterLabel>
+            <translation><!-- ListView --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>MatchingRule</masterLabel>
+            <translation><!-- MatchingRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>MatchingRules</masterLabel>
+            <translation><!-- MatchingRules --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>NamedCredential</masterLabel>
+            <translation><!-- NamedCredential --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>PathAssistant</masterLabel>
+            <translation><!-- PathAssistant --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>PermissionSet</masterLabel>
+            <translation><!-- PermissionSet --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>PlatformCachePartition</masterLabel>
+            <translation><!-- PlatformCachePartition --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>PostTemplate</masterLabel>
+            <translation><!-- PostTemplate --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ProfilQueue</masterLabel>
+            <translation><!-- ProfilQueue --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>QuickAction</masterLabel>
+            <translation><!-- QuickAction --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>RecordType</masterLabel>
+            <translation><!-- RecordType --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>RemoteSiteSettingReport</masterLabel>
+            <translation><!-- RemoteSiteSettingReport --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ReportTyRole</masterLabel>
+            <translation><!-- ReportTyRole --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SamlSsoConfig</masterLabel>
+            <translation><!-- SamlSsoConfig --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Scontrol</masterLabel>
+            <translation><!-- Scontrol --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Settings</masterLabel>
+            <translation><!-- Settings --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SharingCriteriaRule</masterLabel>
+            <translation><!-- SharingCriteriaRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SharingOwnerRule</masterLabel>
+            <translation><!-- SharingOwnerRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SharingReason</masterLabel>
+            <translation><!-- SharingReason --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SharingRules</masterLabel>
+            <translation><!-- SharingRules --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SiteDotCom</masterLabel>
+            <translation><!-- SiteDotCom --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>StaticResource</masterLabel>
+            <translation><!-- StaticResource --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>SynonymDictionary</masterLabel>
+            <translation><!-- SynonymDictionary --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Translations</masterLabel>
+            <translation><!-- Translations --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>ValidationRule</masterLabel>
+            <translation><!-- ValidationRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WebLink</masterLabel>
+            <translation><!-- WebLink --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Workflow</masterLabel>
+            <translation><!-- Workflow --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowAlert</masterLabel>
+            <translation><!-- WorkflowAlert --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowFieldUpdate</masterLabel>
+            <translation><!-- WorkflowFieldUpdate --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowOutboundMessage</masterLabel>
+            <translation><!-- WorkflowOutboundMessage --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowRule</masterLabel>
+            <translation><!-- WorkflowRule --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowSend</masterLabel>
+            <translation><!-- WorkflowSend --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>WorkflowTask</masterLabel>
+            <translation><!-- WorkflowTask --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- Minimum Apex Code Coverage --></label>
+        <name>copado__Minimum_Apex_Code_Coverage__c</name>
+    </fields>
+    <fields>
+        <label><!-- Order --></label>
+        <name>copado__Order__c</name>
+    </fields>
+    <fields>
+        <label><!-- Org Credential --></label>
+        <name>copado__Org_Credential__c</name>
+        <relationshipLabel><!-- User Stories (Org Credential) --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Parent Epic Title --></label>
+        <name>copado__Parent_Epic_Title__c</name>
+    </fields>
+    <fields>
+        <label><!-- Priority --></label>
+        <name>copado__Priority__c</name>
+    </fields>
+    <fields>
+        <label><!-- Project --></label>
+        <name>copado__Project__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Promote Change --></label>
+        <name>copado__Promote_Change__c</name>
+    </fields>
+    <fields>
+        <help><!-- When this checkbox is checked, a promotion and deployment of this User Story will be started. --></help>
+        <label><!-- Promote and Deploy --></label>
+        <name>copado__Promote_and_Deploy__c</name>
+    </fields>
+    <fields>
+        <label><!-- Promote as Single Step --></label>
+        <name>copado__Promote_as_Single_Step__c</name>
+    </fields>
+    <fields>
+        <label><!-- Promotion Test Level --></label>
+        <name>copado__Promotion_Test_Level__c</name>
+        <picklistValues>
+            <masterLabel>NoTestRun</masterLabel>
+            <translation><!-- NoTestRun --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>RunAllTestsInOrg</masterLabel>
+            <translation><!-- RunAllTestsInOrg --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>RunLocalTests</masterLabel>
+            <translation><!-- RunLocalTests --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>RunSpecifiedTests</masterLabel>
+            <translation><!-- RunSpecifiedTests --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <label><!-- QR Code --></label>
+        <name>copado__QR_Code__c</name>
+    </fields>
+    <fields>
+        <label><!-- Release --></label>
+        <name>copado__Release__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Sprint --></label>
+        <name>copado__Sprint__c</name>
+        <relationshipLabel><!-- User Stories --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Status --></label>
+        <name>copado__Status__c</name>
+        <picklistValues>
+            <masterLabel>Approved</masterLabel>
+            <translation><!-- Approved --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Awaiting Approval</masterLabel>
+            <translation><!-- Awaiting Approval --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Cancelled</masterLabel>
+            <translation><!-- Cancelled --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Completed</masterLabel>
+            <translation><!-- Completed --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Draft</masterLabel>
+            <translation><!-- Draft --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>In Progress</masterLabel>
+            <translation><!-- In Progress --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Ready for testing</masterLabel>
+            <translation><!-- Ready for testing --></translation>
+        </picklistValues>
+        <picklistValues>
+            <masterLabel>Rejected</masterLabel>
+            <translation><!-- Rejected --></translation>
+        </picklistValues>
+    </fields>
+    <fields>
+        <help><!-- Check to Stop Indexing Metadata in Copado&apos;s Overlap Awareness. --></help>
+        <label><!-- Stop Indexing Metadata --></label>
+        <name>copado__Stop_Indexing_Metadata__c</name>
+    </fields>
+    <fields>
+        <label><!-- Story Points Other --></label>
+        <name>copado__Story_Points_Other__c</name>
+    </fields>
+    <fields>
+        <label><!-- Story Points SFDC --></label>
+        <name>copado__Story_Points_SFDC__c</name>
+    </fields>
+    <fields>
+        <label><!-- Technical Specifications --></label>
+        <name>copado__Technical_Specifications__c</name>
+    </fields>
+    <fields>
+        <label><!-- Test Script Owner --></label>
+        <name>copado__Test_Script_Owner__c</name>
+        <relationshipLabel><!-- User Stories (Test Script Owner) --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Total Story Points --></label>
+        <name>copado__Total_Story_Points__c</name>
+    </fields>
+    <fields>
+        <label><!-- Triggers Without Coverage --></label>
+        <name>copado__Triggers_Without_Coverage__c</name>
+    </fields>
+    <fields>
+        <label><!-- User Story Title --></label>
+        <name>copado__User_Story_Title__c</name>
+    </fields>
+    <fields>
+        <help><!-- This will create a validation deployment.  When checked, Git metadata and regular metadata will be merged to create 1 validation deployment. --></help>
+        <label><!-- Validate Only --></label>
+        <name>copado__Validate_Only__c</name>
+    </fields>
+    <fields>
+        <label><!-- View in Git --></label>
+        <name>copado__View_in_Git__c</name>
+    </fields>
+    <fields>
+        <label><!-- As a... --></label>
+        <name>copado__userStory_Role__c</name>
+    </fields>
+    <fields>
+        <label><!-- Want to... --></label>
+        <name>copado__userStory_need__c</name>
+    </fields>
+    <fields>
+        <label><!-- So that... --></label>
+        <name>copado__userStory_reason__c</name>
+    </fields>
+    <recordTypes>
+        <label><!-- Bug --></label>
+        <name>Bug</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Investigation --></label>
+        <name>Investigation</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- User Story --></label>
+        <name>User_Story</name>
+    </recordTypes>
+    <validationRules>
+        <errorMessage><!-- A cancellation reason must be given. --></errorMessage>
+        <name>copado__Cancellation_reason_required</name>
+    </validationRules>
+    <validationRules>
+        <errorMessage><!-- This User Story does not meet the required Apex coverage threshold to be promoted. --></errorMessage>
+        <name>copado__Promote_User_Story_Apex_validation</name>
+    </validationRules>
+    <webLinks>
+        <label><!-- Add_Apex_Tests --></label>
+        <name>copado__Add_Apex_Tests</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Add_Commits --></label>
+        <name>copado__Add_Commits</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Add_Metadata --></label>
+        <name>copado__Add_Metadata</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Assign_to_Release --></label>
+        <name>copado__Assign_to_Release</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Commit_Files --></label>
+        <name>copado__Commit_Files</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Import_to_User_Story --></label>
+        <name>copado__Import_to_User_Story</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Manage_Selenium_Tests --></label>
+        <name>copado__Manage_Selenium_Tests</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Mass_Add_User_Stories --></label>
+        <name>copado__Mass_Add_User_Stories</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Mass_Add_User_Stories_Sprint --></label>
+        <name>copado__Mass_Add_User_Stories_Sprint</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Run_Static_Code_Analysis --></label>
+        <name>copado__Run_Static_Code_Analysis</name>
+    </webLinks>
+    <webLinks>
+        <label><!-- Static_Code_Analysis_Summary --></label>
+        <name>copado__Static_Code_Analysis_Summary</name>
+    </webLinks>
+</CustomObjectTranslation>

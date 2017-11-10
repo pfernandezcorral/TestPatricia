@@ -1,0 +1,24 @@
+<apex:page standardController="copado__Deployment__c" title="Clone {!$ObjectType.copado__Deployment__c.Label}" extensions="copado.cloneDeploymentExtension">
+    <c:GAnalytics />
+    <apex:form id="theForm" >
+        <apex:pageMessages />
+        <apex:sectionHeader title="{!$ObjectType.copado__Deployment__c.Label}" subtitle="{!dep.Name}" description="" />
+        <apex:pageBlock id="pb_cloneDeployment"  mode="edit" helpUrl="http://www.copa.do/cms/documentation" helpTitle="{!$Label.copado__help_for_this_page}">
+            <apex:pageblockButtons >
+                <apex:commandButton value="{!$Label.site.cancel}" action="{!cancel}" />
+                <apex:commandButton value="{!$Label.copado__next}" styleClass="btnImportant" action="{!doClone}" />
+            </apex:pageblockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.copado__Step__c.LabelPlural}" for="cs"/>
+                    <apex:inputCheckbox value="{!clone_steps}" id="cs"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.copado__Destination_Org__c.LabelPlural}" for="cd"/>
+                    <apex:inputCheckbox value="{!clone_destOrgs}" id="cd"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

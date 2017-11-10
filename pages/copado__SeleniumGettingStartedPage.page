@@ -1,0 +1,57 @@
+<apex:page sidebar="false" id="thePage" controller="copado.appHome">
+    
+    <c:GAnalytics />
+    <script>
+        ga('send', 'pageview', {
+            'page': '/SeleniumGetingStartedPage',
+            'title': 'Selenium Getting Started Page'
+        });
+    </script> 
+    <apex:sectionHeader id="theHeader" title="{!$Label.copado__selenium_getting_started_header_title}" subtitle="{!$Label.copado__selenium_getting_started_header_subtitle}" description="{!$Label.copado__selenium_getting_started_header_description}" />
+    <apex:pageMessages id="theMessages" />
+    <apex:pageMessage id="theWarning" severity="WARNING" strength="2" summary="{!$Label.copado__selenium_not_enabled}" rendered="{!!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}"></apex:pageMessage>
+    
+    <div style="display: none">
+        <apex:outputText value="{!APIKey}" id="api_key"/>
+        <script type="text/javascript">
+        	var copado_api_key = document.getElementById('{!$Component.api_key}').innerText;
+        </script>
+    </div>
+    
+    <apex:outputPanel rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}">
+        <div id="copadoRecorderExtensionInstalled" style="display:none">
+            <br />
+            <script type="text/javascript">
+            if(copado_api_key) {
+                document.write('<a id="copadoRecorderExtensionNotInstalled1" href="copado:setupext/'+copado_api_key+'/{!JSENCODE($Organization.Name)}" class="btn">{!$Label.SELENIUM_GETTING_STARTED_BIND}</a>');
+            }else{
+                document.write('<a id="copadoRecorderExtensionNotInstalled1" href="{!$Page.appHome}" class="btn">{!$Label.SELENIUM_GETTING_STARTED_APIKEY}</a>');
+            }
+            </script>
+        </div>
+        <div id="copadoRecorderExtensionNotInstalled">
+            <br />
+            <div class="message warningM3" role="alert">
+                <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                    <tbody><tr valign="top">
+                        <td>
+                            <img alt="WARNING" class="msgIcon" src="/s.gif" title="WARNING"/>
+                        </td>
+                        <td class="messageCell"><div id="msg_not_installed" class="messageText"><span>
+                            <h4></h4></span>{!$Label.COPADO_EXTENSION_NOT_INSTALLED}<br/></div>
+                        </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <p>&nbsp;</p>
+    </apex:outputPanel>
+    
+    <iframe frameBorder="0" src="https://sites.google.com/a/copa.do/documentation/copado-selenium-testing/getting-started" style="width: 100%; min-height: 1200px"></iframe>
+</apex:page>

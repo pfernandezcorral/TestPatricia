@@ -1,0 +1,13 @@
+<apex:page standardController="copado__Selenium_Settings__c" extensions="copado.LicenseHelper">
+    <apex:detail subject="{!copado__Selenium_Settings__c.Id}" relatedList="true" title="true" showChatter="true" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}" />
+    <c:GAnalytics />
+    <script>
+        ga('send', 'pageview', {
+          'page': '/SeleniumSettings',
+          'title': 'Selenium Settings'
+        });
+    </script> 
+
+    <!-- check that the feature is enabled, and the user has a license assigned -->
+    <apex:pageMessage severity="WARNING" strength="2" summary="{!possibleCSTErrorMsg}" rendered="{!!ISNULL(possibleCSTErrorMsg)}"></apex:pageMessage>
+</apex:page>

@@ -1,0 +1,52 @@
+<apex:page standardController="copado__Promotion__c" extensions="copado.PromotionEditExtension">
+  <apex:sectionHeader title="Promotion Edit" subtitle="New Promotion"/>
+  <apex:form id="TheForm">
+    <apex:pageBlock title="Information" mode="edit">
+      <apex:pageBlockSection columns="2" showHeader="false" title="Promotion Information">
+        <apex:pageMessages />
+        <apex:pageBlockSectionItem />
+        <apex:inputField value="{!copado__Promotion__c.copado__Release__c}" rendered="{!copado__Promotion__c.copado__Project__c=null}">
+           <apex:actionSupport event="onblur" rerender="TheForm"></apex:actionSupport>
+        </apex:inputField>
+        <apex:pageBlockSectionItem rendered="{!copado__Promotion__c.copado__Release__c=null && copado__Promotion__c.copado__Project__c!=null}"/>
+        <apex:outputField value="{!copado__Promotion__c.OwnerId}"/>
+        <apex:inputField value="{!copado__Promotion__c.copado__Project__c}" rendered="{!copado__Promotion__c.copado__Release__c=null}">
+           <apex:actionSupport event="onblur" rerender="TheForm"></apex:actionSupport>
+        </apex:inputField>
+        <apex:pageBlockSectionItem rendered="{!copado__Promotion__c.copado__Project__c=null && copado__Promotion__c.copado__Release__c!=null}"/>
+        <apex:inputField value="{!copado__Promotion__c.copado__Status__c}" />
+        <apex:inputField value="{!copado__Promotion__c.copado__Source_Environment__c}" rendered="{!copado__Promotion__c.copado__Back_Promotion__c=false}">
+           <apex:actionSupport event="onblur" rerender="TheForm"></apex:actionSupport>
+        </apex:inputField>
+        <apex:inputField value="{!copado__Promotion__c.copado__Destination_Environment__c}" rendered="{!copado__Promotion__c.copado__Back_Promotion__c=true}">
+           <apex:actionSupport event="onblur" rerender="TheForm"></apex:actionSupport>
+        </apex:inputField>
+        <apex:inputcheckbox value="{!copado__Promotion__c.copado__Back_Promotion__c}">
+          <apex:actionSupport event="onclick" reRender="TheForm"/>
+        </apex:inputcheckbox>
+        <apex:pageBlockSectionItem />
+        <apex:inputField value="{!copado__Promotion__c.copado__Send_Deployment_Complete_email__c}"/>  
+        <apex:pageBlockSectionItem />
+        <apex:inputField value="{!copado__Promotion__c.copado__Create_Full_Profiles_Step__c}"/>  
+        <apex:pageBlockSectionItem />
+        <apex:inputField value="{!copado__Promotion__c.copado__Create_Full_Permission_Sets_Step__c}"/>
+      </apex:pageBlockSection>
+        <apex:pageBlockSection columns="1" title="{!$Label.copado__other_information}" rendered="{!showOtherInformation}">
+            <apex:repeat value="{!$ObjectType.copado__Promotion__c.FieldSets.copado__CustomFields}" var="f">
+                <apex:inputField value="{!copado__Promotion__c[f]}"/>
+            </apex:repeat>
+        </apex:pageBlockSection>
+      <!-- Button Section -->
+      <apex:pageBlockButtons location="both">
+        <apex:commandButton value="Save" action="{!save}" />
+        <apex:commandButton value="Cancel" action="{!cancel}" />
+      </apex:pageBlockButtons>
+    </apex:pageBlock>
+  </apex:form>
+  <apex:outputPanel rendered="false">
+        <!-- Added to make sure that all fields are included in the standard controller record -->
+        <apex:repeat value="{!$ObjectType.copado__Promotion__c.FieldSets.copado__CustomFields}" var="f">
+            <apex:outputField value="{!copado__Promotion__c[f]}"/>
+        </apex:repeat>
+    </apex:outputPanel>
+</apex:page>

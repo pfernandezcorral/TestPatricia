@@ -1,0 +1,46 @@
+<apex:page showHeader="true" sidebar="true" controller="copado.ManageSeleniumTestingExt" id="thePage">
+	<link rel="stylesheet" href="{!URLFOR($Resource.Statics,'css/SeleniumManager.css')}" /> 
+    <c:WizardUtils />
+    <head>
+       <c:GAnalytics />
+    </head>
+	<apex:form id="theForm" >
+        <apex:sectionHeader title="{!title} Selenium Tests" subtitle="Manage Selenium Tests" description="Manage Selenium Tests"/>
+        <apex:pageMessages id="pmessages" escape="false"/>
+        <apex:pageBlock id="pbEnvVars" title="{!title}  Selenium Tests">
+            <apex:pageBlockButtons id="pbButtons">
+                <apex:commandButton action="{!save}" styleClass="btnImportant" value="{!$Label.copado__save}"/>
+                &nbsp;
+            	<apex:commandButton action="{!back}" immediate="true" value="{!$Label.copado__back}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+            	<apex:inputField label="Selenium Settings" value="{!mockGroup.copado__Selenium_Settings__c}"/>
+            </apex:pageBlockSection>
+            <br/>
+            <table class="list" id="tblData" border="0" cellspacing="0" cellpadding="0">
+                <tr class="headerRow">
+                    <th>Test Suite</th>
+                    <apex:repeat id="environmentNames" value="{!LenvNames}" var="envname">
+                        <th>{!envname}</th>
+                    </apex:repeat>
+                </tr>
+                <apex:repeat id="groups" value="{!LuserGroups}" var="usg">
+                <tr class="dataRow">
+                    <td class="dataCell">
+                    	<apex:inputCheckbox value="{!usg.selected}"></apex:inputCheckbox>
+                    	<apex:outputText >{!usg.suite.Name}</apex:outputText>
+                    </td>
+                    <apex:repeat value="{!LenvNames}" var="env">
+                    	<td>
+	                    	<apex:repeat value="{!usg.Morgs[env]}" var="org"> 
+	                    		<apex:inputCheckbox value="{!org.selected}"></apex:inputCheckbox>        
+		                        <apex:outputText value="{!org.orgCred.Name}"/><br/>
+	                        </apex:repeat>
+                        </td>
+                    </apex:repeat>
+                </tr>
+                </apex:repeat>
+            </table>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

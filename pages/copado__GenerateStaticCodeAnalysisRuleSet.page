@@ -1,0 +1,149 @@
+<apex:page docType="html-5.0" showHeader="true" sidebar="true" standardController="copado__Static_Code_Analysis_Settings__c" extensions="copado.GenerateStaticCodeAnalysisRuleSet" action="{!generateDefaultRuleSet}" id="RuleSetPage">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+	<head>
+      <c:GAnalytics />
+      <script>
+          ga('send', 'pageview', {
+            'page': '/GenerateStaticCodeAnalysisRuleSet',
+            'title': 'Generate Static Code Analysis RuleSet'
+          });
+      </script>   
+      <apex:slds />
+       <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+      <apex:stylesheet value="{!URLFOR($Resource.copado__SLDS, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+            <style type="text/css">
+                .col-right{
+                    margin-left : 15px;
+                }
+                .msgIcon {
+                    display: none!important
+                }
+                .customMessage * {
+                    color: #fff!important
+                }
+                .customMessage {
+                    margin: 5px 0!important;
+                    max-width: 1280px;
+                    opacity: 1!important;
+                    width: 100%;
+                    font-size: 12px;
+                    border: 0px;
+                    padding-left: 10px;
+                }
+                .message {
+                    opacity: 1
+                }
+                .slds-col{
+                    padding-right: 20px;
+                }
+                .title{
+                    text-transform: uppercase;
+                }
+                .slds-has-flexi-truncate{
+                    padding: 4px 0 4px 0;
+                }
+                #overlay {
+                    background-color: black;
+                    position: fixed;
+                    top: 0; right: 0; bottom: 0; left: 0;
+                    opacity: 0.5;
+                    -moz-opacity:0.5;
+                    -khtml-opacity: 0.5;
+                    z-index: 9999;
+                }
+            </style>            
+            <script>
+                var j$ = jQuery.noConflict();
+
+                j$(document).ready(function(){
+                   overridePageMessages();    
+                });
+                        
+                function overridePageMessages(){    
+                    
+                    textureEffect = 'slds-theme--alert-texture';
+                                 
+                    j$('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+                    j$('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+                    j$('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+                    j$('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                                     
+                    j$('.errorM3').removeClass('errorM3'); 
+                    j$('.confirmM3').removeClass('confirmM3'); 
+                    j$('.infoM3').removeClass('infoM3');   
+                    j$('.warningM3').removeClass('warningM3');  
+                }
+            </script>    
+    </head>
+    <body  class="slds-scope">
+    <apex:form id="theForm">
+    	<div class="slds-page-header">
+                <apex:outputPanel layout="block" id="pageMessages">
+                    <apex:pagemessages id="pmessage"/>
+                </apex:outputPanel>
+            <div class="slds-grid">       
+                <div class="slds-col slds-has-flexi-truncate">     
+            		<div class="slds-media">
+                		<div class="slds-media__figure">
+                		  <span class="slds-icon_container slds-icon-standard-skill" title="Apex Rule Sets">
+                		    <svg class="slds-icon" aria-hidden="true">
+                		      <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS, '/assets/icons/standard-sprite/svg/symbols.svg#skill')}"></use>
+                		    </svg>
+                		  </span>
+                		</div>
+                		<div class="slds-media__body">
+                		  <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="{!$Label.copado__apex_rules_set}">{!$Label.copado__apex_rules_set}</h1>
+                		  <p class="slds-text-body_small slds-line-height_reset">{!$Label.copado__ruleset_generator}</p>
+                		</div>
+            		</div>
+                </div>
+                <div class="slds-col slds-no-flex slds-grid slds-align-top ">
+                <div class="slds-button-group" role="group">
+                    <button class="slds-button slds-button--neutral" onclick="window.history.back();">Back</button>
+                </div>
+                </div>
+
+            </div>
+		</div>
+	    
+       	<br/><br/>
+        <table class="slds-table slds-table_bordered slds-table_fixed-layout" id="tblData">
+        	<thead>
+                <tr>
+                    <th scope="col" style="width:10rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__rule_name}">{!$Label.copado__rule_name}</div>
+                    </th>
+                    <th scope="col" style="width:3rem;">
+                    	<div class="slds-truncate" title="{!$Label.copado__priority}">{!$Label.copado__priority}</div>
+                    </th>
+                    <th scope="col" style="width:25rem;">
+                        <div class="slds-truncate" title="{!$Label.copado__message_capitals}">{!$Label.copado__message_capitals}</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat id="ruleSetId" value="{!apexRules}" var="rule">
+                <tr>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!rule.copado__Rule_Name__c}">
+                        	<apex:outputText value="{!rule.copado__Rule_Name__c}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                    	<div class="slds-truncate" title="{!rule.copado__Priority__c}">
+                        	<apex:outputText value="{!rule.copado__Priority__c}"/>
+                        </div>
+                    </td>
+                    <td role="gridcell">
+                        <div class="slds-truncate" title="{!rule.copado__Message__c}">
+                            <apex:outputText value="{!rule.copado__Message__c}"/>
+                        </div>
+                    </td>
+                </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:form>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,40 @@
+<apex:page standardController="copado__User_Story__c" extensions="copado.UserStorySelectCommits" title="User Story Select Commits">
+   <script>
+        function checkAll(cb) {
+            var inputElem = document.getElementsByTagName("input");
+            for(var i=0; i<inputElem.length; i++) {
+                if(inputElem[i].id.indexOf("checkedone")!=-1 && !inputElem[i].disabled && inputElem[i].style.display != 'none'){
+                    inputElem[i].checked = cb.checked;
+                }
+            }
+        }   
+    </script>
+    <apex:form id="theForm">
+
+	    <apex:sectionHeader title="{!$ObjectType.copado__Git_Org_Commit__c.LabelPlural}" subtitle="{!orgName} ➠ {!repoName} / {!branch}"/>
+	    <apex:pageMessages />
+	        
+	    <apex:pageBlock id="pb_selectGitCommits"  mode="edit" helpUrl="http://docs.copa.do" helpTitle="{!$Label.copado__help_for_this_page}">
+
+		    <apex:pageblockButtons >
+	            <apex:commandButton value="{!$Label.site.save}" action="{!saveSelections}"/>
+	            <apex:commandButton value="{!$Label.site.cancel}"  action="{!cancel}" immediate="true"/>
+	        </apex:pageblockButtons>
+            <apex:pageBlockTable value="{!commits}" var="c">
+                <apex:column >
+                   <apex:facet name="header">
+                            <apex:inputCheckbox >
+                                <apex:actionSupport event="onclick" onsubmit="checkAll(this)" immediate="true" rerender="nothing"/>
+                                </apex:inputCheckbox>
+                            </apex:facet>
+                        <apex:inputCheckbox value="{!c.sel}" id="checkedone" disabled="{!c.sel}">
+                    </apex:inputCheckbox>
+                </apex:column>
+                <apex:column value="{!c.c.copado__Commit_Date__c}"/>
+                <apex:column value="{!c.c.copado__Commit_Id__c}"/>
+                <apex:column value="{!c.c.copado__Commit_Message__c}"/>
+	        </apex:pageBlockTable>
+	    </apex:pageBlock>
+
+	</apex:form>
+</apex:page>

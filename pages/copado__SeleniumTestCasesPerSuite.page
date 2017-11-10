@@ -1,0 +1,282 @@
+<apex:page standardController="copado__Selenium_Test_Suite__c" extensions="copado.SeleniumTestCaseViewEdit,copado.LicenseHelper">
+
+    <apex:stylesheet value="{!URLFOR($Resource.copado__jqx,'jqwidgets/styles/jqx.base.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.copado__jqx,'jqwidgets/styles/jqx.fresh.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.copado__jqx,'jqwidgets/jqx-all.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery-sortable.0.9.12.min.js')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics,'js/libs/jquery-ui.min.js')}"></script>
+	<c:GAnalytics />
+    <style>
+        .apexCode {
+            width: 80%;
+        }
+    </style>
+    <script type="text/javascript">
+        var $copado = jQuery.noConflict(),
+            __sfdcSessionId = '{!GETSESSIONID()}';
+        var cps = cps || {};
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        var uid_counter = 0;
+        cps.data = cps.data || {};
+        cps.template = cps.template || {};
+        cps.data.jsonSelectedTestCases = '';
+        cps.data.testCaseListElt = '';
+
+        cps.dataAdapter = {};
+
+        cps.pre_save = function() {
+            var saveData = [];
+            for (var i = 0; i < cps.data.jsonSelectedTestCases.length; i++) {
+                var r = cps.data.jsonSelectedTestCases[i];
+                saveData.push([r.Id, $copado('#' + r._selectDatasetName).val() || null]);
+                delete r._selectDatasetName;
+            }
+            console.log('cps.pre_save:', JSON.stringify(saveData));
+            $copado(cps.data.TestCasesPerSuiteSaveElt).val(JSON.stringify(saveData));
+            return true;
+        };
+
+        cps.drawTable = function() {
+            $copado('#resultTable tbody').html('');
+            var items = cps.data.jsonSelectedTestCases;
+            for (var i = 0; i < items.length; i++) {
+                cps.addRow(items[i].Name, items[i].uid, i, items[i]);
+            }
+            cps.initSortable();
+        };
+        cps.initSortable = function() {
+            $copado('#resultTable tbody').sortable({
+                placeholder: 'ui-state-highlight',
+                update: function(event, ui) {
+                    var temp = [],
+                        i, map = {};
+                    for (i = 0; i < cps.data.jsonSelectedTestCases.length; i++) {
+                        map[cps.data.jsonSelectedTestCases[i].uid] = cps.data.jsonSelectedTestCases[i];
+                    }
+                    $copado("#resultTable").find("tbody>tr").each(function() {
+                        var uid = this.getAttribute('id');
+                        temp.push(map[uid]);
+                    });
+                    cps.data.jsonSelectedTestCases = temp;
+                    cps.drawTable();
+                }
+            });
+            $copado("#tbl_TestScriptSteps").disableSelection();
+        };
+        cps.removeRow = function(rowId) {
+            if ($copado('#' + rowId).size() === 1) $copado('#' + rowId).remove();
+            var tcs = cps.data.jsonSelectedTestCases;
+            for (var i = 0; i < tcs.length; i++) {
+                if (tcs[i].uid === rowId) {
+                    tcs.splice(i, 1);
+                    return;
+                }
+            }
+        };
+        cps.addRow = function(name, rowId, order, row) {
+            var _row = cps.template.row(name, rowId, order, row);
+            if ($copado('#' + rowId).size() > 0) return;
+            $copado('#resultTable tbody').append(_row);
+        };
+
+        cps.template.row = function(name, rowId, order, row) {
+            var i, j;
+            var selectDatasetName = 'dataset-' + row.Id + '-' + rowId;
+            row._selectDatasetName = selectDatasetName;
+            var options_datasetnames = ['<select id="' + selectDatasetName + '" data-uid="' + rowId + '" onchange="datasetChanged(this)">', '<option value="">(None)</option>'];
+            row.datasets = row.datasets || [];
+
+            for (j = 0; j < row.datasets.length; j++) {
+                var sel = (row.datasets[j] === row.selectedDataset) ? ' selected="selected"' : '';
+                options_datasetnames.push('<option value="' + escapeHtml(row.datasets[j]) + '"' + sel + '>' + escapeHtml(row.datasets[j]) + '</option>')
+            }
+
+            options_datasetnames.push('</select>');
+
+            return '<tr class="dataRow" data-order="' + order + '" id="' + rowId + '">' +
+                '<td style="padding-left:1px; padding-right:1px;" class="actionColumn">' +
+                '<span class="ui-icon ui-icon-arrowthick-2-n-s" style="cursor:move;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>' +
+                '</td>' +
+                '<td class="dataCell" id="row' + order + '-col2">' + name + '</td>' +
+                '<td class="dataCell" id="row' + order + '-col2">' + row.Version + '</td>' +
+                '<td class="dataCell" id="row' + rowId + '-col3">' + (options_datasetnames.join('\n')) + '</td>' +
+                '<td class="dataCell"><button id="btnViewEdit-' + order + '" class="btn" onClick="cps.testcaseViewEdit(\'' + rowId + '\');return false;">{!$Label.VIEW}</button></td>' +
+                '<td class="dataCell"><button id="btnDeleted-' + order + '" class="btn" onClick="cps.removeRow(\'' + rowId + '\');return false;">{!$Label.REMOVE}</button></td>' +
+                '</tr>';
+        };
+
+        cps.testcaseViewEdit = function(rowId) {
+            var tcs = cps.data.jsonSelectedTestCases;
+            for (var i = 0; i < tcs.length; i++) {
+                if (tcs[i].uid === rowId) {
+                    //openPopup(a, "lookup", 350, 480, "width\x3d" + b + ",height\x3d480,toolbar\x3dno,status\x3dno,directories\x3dno,menubar\x3dno,resizable\x3dyes,scrollable\x3dno", !0)
+                    window.open('{!$Page.SeleniumTestCaseEditor}?id=' + tcs[i].Id + '&popup=1', 'SeleniumTestCaseEditor',
+                        "width=800,height=480,toolbar=no,status=no,directories=no,menubar=no,resizable=yes,scrollable=yes");
+                    return;
+                }
+            }
+        }
+
+        function datasetChanged(select) {
+            
+            var dataset = $copado(select).val();
+            var uid = $copado(select).attr('data-uid');
+            var temp = [],
+                i, map = {};
+            for (i = 0; i < cps.data.jsonSelectedTestCases.length; i++) {
+                console.log('save', cps.data.jsonSelectedTestCases[i].uid === uid, dataset, cps.data.jsonSelectedTestCases[i].uid, uid)
+                if (cps.data.jsonSelectedTestCases[i].uid === uid) {
+                    cps.data.jsonSelectedTestCases[i].selectedDataset = dataset;
+                }
+            }
+
+        }
+
+        cps.data.jsonSelectedTestCases = {!LookupTestCases
+        };
+        $copado.each(cps.data.jsonSelectedTestCases, function(idx, v) {
+            v.uid = 'uid' + (uid_counter++);
+        });
+
+        $copado(document).ready(function() {
+
+            // prepare the data
+            var source = {
+                datatype: "json",
+                datafields: [{
+                    name: 'Id'
+                }, {
+                    name: 'Name'
+                }, {
+                    name: 'Version'
+                }, {
+                    name: 'selectedDataset'
+                }, {
+                    name: 'datasets'
+                }],
+                url: "{!URLFOR($Page.SeleniumTestCasePerSuiteJson)}",
+                data: {}
+            };
+            cps.dataAdapter = new $copado.jqx.dataAdapter(source, {
+                formatData: function(data) {
+                    //data.name_startsWith = $copado("#searchField").val();
+                    data.q = $copado("#jqxcombobox").val();
+                    console.log('searching for', data.q)
+                    return data;
+                }
+            });
+
+            $copado("#jqxcombobox").jqxComboBox({
+                width: "100%",
+                height: 25,
+                source: cps.dataAdapter,
+                remoteAutoComplete: true,
+                autoDropDownHeight: true,
+                selectionMode: "dropDownList",
+                displayMember: "Name",
+                valueMember: "Id",
+                renderer: function(index, label, value) {
+                    var item = cps.dataAdapter.records[index];
+                    if (item != null) {
+                        return item.Name;
+                    }
+                    return "";
+                },
+                search: function(searchString) {
+                    cps.dataAdapter.dataBind();
+                }
+            });
+            $copado('#jqxcombobox').on('select', function(event) {
+                var args = event.args;
+                if (args) {
+                    var index = args.index;
+                    var item = args.item;
+                    $copado(this).jqxComboBox('unselectItem', item);
+                    if (args.type == 'none') {
+                        console.log('skipping');
+                        return;
+                    }
+                    item.originalItem.uid = 'uid' + (uid_counter++);
+                    cps.data.jsonSelectedTestCases.push(item.originalItem);
+                    cps.drawTable();
+                }
+            });
+
+
+            cps.drawTable();
+        });
+    </script>
+    <script src="/soap/ajax/36.0/connection.js"></script>
+
+    <div style="float: left;" id="testtesttest"></div>
+
+    <apex:sectionHeader id="theHeader" title="{!$ObjectType.copado__Selenium_Test_Suite__c.Label}" subtitle="{!copado__Selenium_Test_Suite__c.Name}" description="{!$Label.copado__test_cases_per_suite_description}" />
+    <apex:pageMessages />
+
+    <!-- check that the feature is enabled, and the user has a license assigned -->
+    <apex:pageMessage severity="WARNING" strength="2" summary="{!possibleCSTErrorMsg}" rendered="{!!ISNULL(possibleCSTErrorMsg)}"></apex:pageMessage>
+
+    <apex:form id="theForm" rendered="{!and($Setup.copado__Settings__c.copado__Enabled_Multi_Licenses__c, $Setup.copado__Copado_License__c.copado__Enable_CST__c)}">
+        <apex:pageBlock id="pb" title="{!$Label.copado__add_remove_test_case_description}">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!saveTestCasesPerSuite}" value="{!$Label.site.save}" onclick="cps.pre_save()" />
+                <apex:commandButton action="{!cancel}" value="{!$Label.site.cancel}" immediate="true" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:outputPanel >
+                    <div id='jqxWidget'>
+                        <table style="width:100%">
+                            <tr>
+                                <td>
+                                    <div style="margin-top: 7px; margin-bottom: 5px;" id="jqxcombobox"></div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <table id="resultTable" boder="0" cellspacing="0" cellpadding="0" style="width:100%;" class="list">
+                                        <thead>
+                                            <tr class="headerRow" scope="col">
+                                                <th></th>
+                                                <th>{!$ObjectType.Selenium_Test_Case__c.fields.Name.Label}</th>
+                                                <th>{!$ObjectType.Selenium_Test_Case__c.fields.Version__c.Label}</th>
+                                                <th>{!$ObjectType.Selenium_Test_Case_Per_Suite__c.fields.Test_Dataset_Name__c.Label}</th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+        <apex:inputHidden value="{!TestCasesPerSuiteSave}" id="TestCasesPerSuiteSave" />
+        <script type="text/javascript">
+            cps.data.TestCasesPerSuiteSaveElt = document.getElementById('{!$Component.TestCasesPerSuiteSave}');
+        </script>
+    </apex:form>
+    <link href="{!URLFOR($Resource.CopadoChangeManagement, 'Assets/jquery-ui-1.11.1/jquery-ui.theme.min.css')}" rel="stylesheet" type="text/css" />
+	
+    <script>
+        ga('send', 'pageview', {
+            'page': '/SeleniumTestCasePerSuite',
+            'title': 'Selenium Test Case Per Suite'
+        });
+    </script> 
+</apex:page>

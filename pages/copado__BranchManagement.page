@@ -1,0 +1,595 @@
+<apex:page id="thePage" standardController="copado__Deployment_Flow__c" extensions="copado.BranchManagementExtension,copado.Settings,copado.FeatureHelper,copado.JsRemotingController" sidebar="false" showHeader="false">
+    <c:GAnalytics />
+    <c:WizardUtils />
+    <apex:slds />
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics,'js/libs/jquery.min.1.10.2.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics,'js/libs/jquery-ui.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.jqx, 'jqwidgets/jqx-all.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.jqx, 'jqwidgets/jqxwindow.js')}"></script>
+    <script type="text/javascript"> var Copado_Licenses = {!CurrentUserLicenses};</script>
+    <apex:stylesheet value="{!URLFOR($Resource.copado__jqx, 'jqwidgets/styles/jqx.base.css')}" />
+    <link rel="stylesheet" href="{!URLFOR($Resource.Statics,'css/jquery-ui.css')}" />
+    <link rel="stylesheet" href="{!URLFOR($Resource.CopadoChangeManagement,'Assets/css/deploymentFlowConnections.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.utilsV2) }"/>
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/Cometd.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.JsRemoting) }"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.CopadoChangeManagement, 'Assets/js/jquery.svg.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.CopadoChangeManagement, 'Assets/js/jquery.connectingLine.js')}"></script>
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/json2.js')}"/>
+    <script type="text/javascript" src="{!URLFOR($Resource.Statics, 'js/jquery.cometd.js')}"></script>
+    <apex:includeScript value="{!URLFOR($Resource.copado__Statics, 'js/jszip.js')}" />
+    <script type="text/javascript" src="{!URLFOR($Resource.copadoStreamingService) }"></script>
+    <apex:includeScript value="{!URLFOR($Resource.statusManager) }" />
+    <head>
+       <title>Copado Branch Management</title>
+        <style type="text/css">
+            .statusContent{
+                border: 1px solid #0070d2;
+                background-color: #0070d2;
+                color: white;
+                margin-top: 40px;
+                padding-top: 6px;
+                padding-bottom: 6px;
+                border-top: 1px solid #0070d2;
+                border-bottom-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+            }
+            .statusContentSync{
+                background-color: #F4F6F9;
+                color: green;
+            }
+            .co-lockerBlock1 {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 999;
+                background-color: rgba(114, 134, 134, 0.46);;
+            }
+            .js-show-diff{
+                float: right;
+                margin-right: 10px;
+                color: blue !important;
+                text-decoration: underline;
+            }
+            .jqx-tooltip-main{
+                text-align:left;
+            }
+            .jqx-tabs-titleContentWrapper.jqx-disableselect{
+                margin-top: 0px !important;
+            }
+            .btnPromotion{
+                width: 25px;
+                height: 20px;
+                background-color: transparent;
+                border-right: none;
+                border-bottom: none;
+                border-top: none;
+                float: right;
+                border: none;
+                color:darkgray !important;
+            }
+            .btnAheadOrBehind {
+                color: white !important;
+            }
+            .resyncEnv{
+                width: 25px;                
+                border-right: none;
+                border-bottom: none;
+                border-top: none;
+                float: right;
+                border: none;
+                color:white !important;
+                background-color:#0070d2 !important;
+                text-align: center;
+                height:inherit;
+                font-weight:bolder;
+            }
+            .slds-screenlocker div{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-right: -50%;
+                transform: translate(-50%, -50%);
+                padding-top: 15px;                  
+                padding: 30px;
+                background-color: transparent;
+                z-index: 9999;
+            }
+            #screenLockerLightning{
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 100%;
+                z-index: 10000;
+                background-color: rgba(33,33,33,0.2);
+            }
+            #screenLockerLightningText {
+                font-size: 14pt;
+                font-weight: bold;
+            }
+            #screenLockerLightningFrame {
+                text-align: center;
+                border: 1px solid black;
+                background-color: rgba(255, 255, 255, 0.75);
+                border-radius: 10px;
+            }
+            .envBox{
+                height: 44px;
+            }
+            .envBox h3{
+                padding: 0;
+                padding-left: 5px;
+            }
+            .envBox p{
+                color: darkgray;
+                float: left;
+                padding-left: 5px;
+            }
+            /* Raised effect – pushes up on hover */
+            .paper-raise:before {
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+            }
+            .paper-raise:not([disabled]):hover {
+              color:black !important;
+              background-color: #d9e5f8;
+            }
+            .paper-raise:hover:before {
+              box-shadow: 0 15px 10px -10px rgba(31, 31, 31, 0.5);
+            }
+
+            #myInsext .insext-active .insext-popup {
+            }
+            #myInsext.insext-active .myinsext-btn {
+                padding: 5px;
+            }
+            #myInsext .myinsext-btn {
+                float: left;
+                top: 50%;
+                left: 0;
+                border: 1px solid #0070d2;
+                border-radius: 0 5px 5px 0;
+                border-left: none;
+                box-sizing: border-box;
+                width: 40px;
+                position: fixed;
+                background-color: white;
+                box-shadow: rgb(160, 166, 171) -2px 0px 2px;
+                padding: 5px;
+                z-index: 999;
+                display: block;
+            }
+            
+            #boxCanvas{
+                background-color: transparent;
+            }
+
+            .bgActive{
+                background-image: linear-gradient(0deg, transparent 24%, lightgray 25%, lightgray 26%, transparent 27%, transparent 74%, lightgray 75%, lightgray 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, lightgray 25%, lightgray 26%, transparent 27%, transparent 74%, lightgray 75%, lightgray 76%, transparent 77%, transparent);
+                background-size: 17px 15px;
+            }
+            #overlay {
+                box-sizing: border-box;
+                position: fixed;
+                display: none;
+                box-shadow: rgba(0, 0, 0, 0.16) 0px -2px 2px 0px;
+                left: 0;
+                top: 25%;
+                bottom: 0;
+                height: 288px;
+                background-color: rgb(255, 255, 255);
+                border-radius: 4px 0px 4px 4px;
+                border-width: 1px;
+                border-style: solid;
+                border-color: rgb(216, 221, 230);
+                border-image: initial;
+                z-index: 2;
+                cursor: pointer;
+            }
+
+        </style>
+        <script type="text/javascript">
+            var $copado = jQuery.noConflict(), 
+            __sfdcSessionId = '{!GETSESSIONID()}';
+        </script>
+        <script src="/soap/ajax/35.0/connection.js"></script>
+        <c:ShowWebhook url="webhook/branchStatuses" recordId="{!copado__Deployment_Flow__c.Id}" />
+    </head>
+    <c:IframeLocker url="" />
+    <apex:outputField value="{!copado__Deployment_Flow__c.copado__Flow_Step_Coordinates__c}" rendered="false" />
+    <apex:outputField value="{!copado__Deployment_Flow__c.copado__Main_Branch__c}" rendered="false" />
+    <apex:outputField value="{!copado__Deployment_Flow__c.copado__Git_Repository__c}" rendered="false"/>
+    <body class="slds-scope">
+        <apex:form id="Lightningform">
+        <apex:outputPanel id="mainPanel">
+            <div style="width:150px; left: 5px; position:fixed;"> 
+                <button id="toggleBG" class="slds-button slds-button_neutral" onclick="toggleBackground();return false;" name="Toggle Background">
+                    <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                        <use
+                            xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!JSENCODE(URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#preview'))}">
+                        </use>
+                        <span class="slds-assistive-text">Toggle background grid view</span>
+                    </svg>
+                </button>
+            </div>
+            <div style="width:60%; right: 15px; position:fixed;">          
+                <c:JobsManager matchingKeys="{!jobsManagerMatchingKeys}" ></c:JobsManager>
+            </div>
+            <div id="screenLockerLightning" class="slds-screenlocker" >
+                <div id="screenLockerLightningFrame">
+                    <img style="width: 100px;" src="{!URLFOR($Resource.SLDS,'/assets/images/spinners/slds_spinner_brand.gif')}" />
+                    <p id="screenLockerLightningText"></p>
+                    <br /><br />
+                    <a href="#" onclick="setLockScreenMessage(); return false;">{!$Label.HIDE_MESSAGE}</a>
+                </div>
+            </div>
+            <c:ScreenLocker msg=""/>
+            
+            <apex:outputPanel id="globalWrapper">
+                <script type="text/javascript">
+                var copadoApp = {
+                    ns: '{!JSENCODE(namespace)}',
+                    data: {
+                        flowId: '{!JSENCODE(Deployment_Flow__c.Id)}',
+                        __coordinates__: '{!JSENCODE(Deployment_Flow__c.Flow_Step_Coordinates__c)}',
+                        mainBranch: '{!JSENCODE(Deployment_Flow__c.Main_Branch__c)}',
+                        repositoryId: '{!JSENCODE(Deployment_Flow__c.Git_Repository__c)}',
+                        allNotificationMatchingKeys: '{!JobsManagerMatchingKeys}'
+                    },
+                    envConnections: [],
+                    environments: [],
+                    urlParameters: '{!JSENCODE(urlParameters)}',
+                    lightningSpinner: '{!URLFOR($Resource.SLDS,"/assets/images/spinners/slds_spinner_brand.gif")}',
+                    
+                };
+            </script>
+                <!-- -->
+                <div id="myInsext" class="">
+                    <div class="myinsext-btn" onclick="toogle();" tabindex="0" accesskey="i" title="Show additional operations...">
+                        <center>
+                            <img height="20" width="20" src="{!URLFOR($Resource.Statics,'img/icons/logo-icon.png')}"/>
+                        </center>
+                    </div>
+                    <div id="overlay" class="insext-popup">
+                        <div style="padding-top:30px; padding-left: 10px">
+
+                            <div class="slds-form">
+                                <div class="slds-form-element" style="margin-top: 10px">
+                                    <input type="button" class="btn slds-button slds-button_neutral" onclick="backDeploy.recalculate(this);toogle();" value="Recalculate" />
+                                    <button id="btnShowHookUrl" class="btn slds-button slds-button_neutral" value="Show Hook URL" onclick="showWebhook(); return false;">Show Hook URL</button>
+                                </div>
+                                <div class="slds-form-element" style="margin-top: 10px">
+                                    <div class="slds-form-element__control">
+                                      <span class="slds-checkbox">
+                                        <input type="checkbox" name="showEnvCI" onclick="backDeploy.showHideCIEnvironments(this.checked);" id="envAutoComplete" value="on"/>
+                                        <label class="slds-checkbox__label" for="envAutoComplete">
+                                            <span class="slds-checkbox_faux"></span>
+                                            <span class="slds-form-element__label">Show related Continuous Integrations</span>
+                                        </label>
+                                      </span>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element" style="margin-top: 10px">
+                                    <button id="showLogs" class="btn slds-button slds-button_neutral" value="Show Hook URL" onclick="showLogsModal(); return false;">Latest sync results</button>
+                                </div>
+                            </div>
+                            <div class="slds-grid">
+                                <div class="slds-col">
+                                    <apex:outputPanel layout="block" id="warningMessagesPageBlockSection" >
+                                        <script type="text/javascript">window.warningMessagesPageBlockSectionId = '{!$Component.warningMessagesPageBlockSection}';
+                                    document.getElementById(window.warningMessagesPageBlockSectionId).style.display='none';</script>
+                                        <div id="warningMessages"></div>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a name="canvasLocation" style="display:none;">toplink</a>
+                <!-- Canvas Div -->
+                <div id="boxCanvas" class="bgActive"></div>
+                <!--<svg id="svg-id" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="display: inline; width: 1440; min-width: 1440; height: 720; min-height: 720;" version="1.1">
+                    <foreignobject x="0" y="0" width="100%" height="100%">
+                            
+                    </foreignobject>
+                </svg>-->
+            </apex:outputPanel>
+
+            <script type="text/javascript" src="{!URLFOR($Resource.backDeploy) }"></script>
+            <script type="text/javascript" src="{!URLFOR($Resource.localStreamingService) }"></script>
+            <script type="text/javascript">
+                backDeploy.config.ns = copadoApp.ns;
+                backDeploy.config.fileName = 'PROGRESS_STATUS_COPADO';
+                backDeploy.config.imageUrl.loading = '{!URLFOR($Resource.Statics,"img/icons/loading.gif")}';
+                backDeploy.config.imageUrl.confirm = '{!URLFOR($Resource.Statics,"img/icons/confirm16.png")}';
+                backDeploy.config.imageUrl.error = '{!URLFOR($Resource.Statics,"img/icons/error16.png")}';
+                backDeploy.config.imageUrl.lookup = '{!URLFOR($Resource.Statics,"img/icons/view.png")}';
+                backDeploy.config.imageUrl.spacer = '{!URLFOR($Resource.Statics,"img/icons/s.gif")}';
+                backDeploy.config.herokuServer = '{!herokuServer}';
+                backDeploy.config.currentUserId = '{!$User.Id}';
+                backDeploy.labels.AHEAD = 'ahead';
+                backDeploy.labels.BEHIND = 'behind';
+                backDeploy.labels.ACTION_BUTTON_LABEL = 'Submit';
+                backDeploy.labels.LOADING = 'Loading';
+                backDeploy.labels.NAME = 'Name';
+                backDeploy.labels.BRANCH = 'Branch';
+                backDeploy.labels.TEST_LEVEL = 'Test Level';
+                backDeploy.labels.AUTO_MERGE_DEPLOY = 'Auto Merge & Deploy';
+                backDeploy.labels.YES = 'Yes';
+                backDeploy.labels.NO = 'No';
+                backDeploy.labels.NEXT_ENVIRONMENT = 'Next Environment';
+                backDeploy.labels.MORE_DETAILS = 'More Details';
+                backDeploy.labels.IN_SYNC = 'In Sync';
+
+                backDeploy.SVG_INSYNC_CHECKBOX = '<svg class="slds-button__icon slds-button__icon_left" aria-hidden="true"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use></svg>';
+                backDeploy.SVG_ARROW_RIGHT = '<svg class="slds-button__icon" aria-hidden="true"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#forward')}"></use></svg>';
+                backDeploy.SVG_ARROW_LEFT = '<svg class="slds-button__icon" aria-hidden="true"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#back')}"></use></svg>';
+
+                console.info('Assigning step details...');
+                backDeploy.config.map = {!(stepMapJSON)};
+    
+                $copado( document ).ready(function() {
+                    copadoStreamingService.ns = copadoApp.ns;
+                    copadoStreamingService.init();
+                    unlock();
+                    backDeploy.loadPage();
+                    localStreamingService.data.parentId = copadoApp.data.flowId;
+                    localStreamingService.data.childrenArray = backDeploy.data.stepIds;
+                    localStreamingService.data.readStatusFromAttachmentCB = backDeploy.statusHandler;
+                    localStreamingService.config.ns = copadoApp.ns;
+                    localStreamingService.config.attachmentFileName = 'PROGRESS_STATUS_COPADO';
+                    
+                    $copado.cometd.subscribe('/topic/CopadoNotifications', function(message) {
+                        //console.info('Push message: ', message);
+                        localStreamingService.readStream(message);
+                    });
+                    window.onbeforeunload = copadoStreamingService.disconnect;
+                    onResize('init');
+                });
+                
+
+            function toogle(){
+                if(document.getElementById("overlay").style.display.indexOf("block") > -1){
+                    document.getElementById("overlay").style.display = "none";
+                    $copado('#myInsext').removeClass('insext-active');
+                }else{
+                    document.getElementById("overlay").style.display = "inline-block";
+                    $copado('#myInsext').addClass('insext-active');
+                }
+            }
+            function toggleBackground(){
+                var $canvas = $copado('#boxCanvas');
+                if($canvas.hasClass('bgActive')){
+                    $canvas.removeClass('bgActive');
+                }else{
+                    $canvas.addClass('bgActive');
+                }
+            }
+
+            function onResize(calledFrom){
+                var $win = $copado(window);
+                var $doc = $copado(document);
+                var flowSize = calculateFlowSize();
+                $copado('#boxCanvas').css('height',flowSize.top);
+                $copado('#boxCanvas').css('width',flowSize.left);
+                //console.info('Window size: ', $win.width(), $win.height());
+                //console.info('Flow size: ', flowSize.left, flowSize.top);
+                //console.info('Doc size: ', $doc.width(), $doc.height());
+                
+                $canvas = $copado("#boxCanvas canvas");
+                if(flowSize.left <=  $win.width()){
+                    $canvas.prop('width',  $win.width());
+                    $copado('#boxCanvas').css('width',$win.width());
+                    $doc.css('width',$win.width());
+                }else{
+                    $canvas.prop('width',  flowSize.left);
+                    $copado('#boxCanvas').css('width',flowSize.left);
+                    $doc.css('width',flowSize.left);
+                }
+                if(flowSize.top <=  $win.height()){
+                    $canvas.prop('height',  $win.height());
+                    $copado('#boxCanvas').css('height',$win.height());
+                    $doc.css('height',$win.height());
+                }else{
+                     $canvas.prop('height',  flowSize.top);
+                     $copado('#boxCanvas').css('height',flowSize.top);
+                     $doc.css('height',flowSize.top);
+                }
+                
+                // Avoid drawing, since init or loading the page will do it in a few seconds.
+                if(calledFrom!=='init')
+                    backDeploy.drawEnvironmentBoxes();
+            }
+            function calculateFlowSize(){
+                var records = JsRemoting.deploymentFlows.getFlowStepCoordinates(backDeploy.config.ns, backDeploy.data.flowId);
+                var__coordinates__ = records[0][backDeploy.config.ns+'Branch_Management_Coordinates__c'];
+                if(__coordinates__ && __coordinates__.length != 0){
+                    var tmp = (__coordinates__).split(',');
+                    var left = 0;
+                    var top = 0;
+                    for(var i=0; i<tmp.length; i++){ 
+                        var tmp2 = tmp[i].split('-');                           
+                        left = parseInt(tmp2[1]) > left ? parseInt(tmp2[1]) : left;
+                        top = parseInt(tmp2[2]) > top ? parseInt(tmp2[2]) : top;                            
+                    }
+                    return {'left':left+350, 'top':top+150};
+                }else{
+                    return {'left':0, 'top':0};
+                }
+            }
+            var timer;
+            $copado(window).on('resize', function(){
+                timer && clearTimeout(timer);
+                timer = setTimeout(onResize, 100);
+            });
+        
+            ga('send', 'pageview', {
+              'page': '/BranchManagement',
+              'title': 'Branch Management'
+            });
+
+            var mStart = mStart || '';
+            var oWidth = oWidth || '';
+            
+            CalculateWidth = function(elem, e) {
+                var childObj = $copado(elem).children().first();
+                var parObj = childObj.parents().first();
+                var count = 1;
+                
+                while(parObj.prop("tagName") != 'TH') {
+                    parObj = parObj.parents().first();
+                    count++;
+                }
+
+                var mouseStart=e.clientX;
+                mStart = mouseStart;
+                oWidth = parObj.outerWidth();
+            };
+             
+            SetNewWidth = function(elem, e) {
+                var childObj = $copado(elem).children().first();
+                var parObj = childObj.parents().first();
+                var count = 1;
+                
+                while(parObj.prop("tagName") != 'TH') {
+                    parObj = parObj.parents().first();
+                    count++;
+                }
+
+                var mouseStart = mStart;
+                var oldWidth = oWidth
+                
+                if(e.clientX > 0){
+                    var newWidth = e.clientX- parseFloat(mouseStart)+parseFloat(oldWidth);
+                    parObj.width(newWidth);
+                }
+            }
+
+            $copado('#boxCanvas').on('click',function(){
+                document.getElementById("overlay").style.display = "none";
+                $copado('#myInsext').removeClass('insext-active');
+            });
+
+            function overridePageMessages(cb){
+
+                textureEffect = 'slds-theme--alert-texture';
+
+                $copado('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+                $copado('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+                $copado('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+                $copado('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+
+                $copado('.errorM3').removeClass('errorM3'); 
+                $copado('.confirmM3').removeClass('confirmM3'); 
+                $copado('.infoM3').removeClass('infoM3');   
+                $copado('.warningM3').removeClass('warningM3');
+
+                $copado('.message').css('margin',0);
+                $copado('.message').on('click',function(){$copado('.message').hide()});
+                $copado('.message').css('margin-top',10);
+                $copado('.message').css('font-size','11pt');
+
+                if(cb) cb();
+            }
+            
+            function setStepJSON(){
+                var core = copadoApp.ns ? window[copadoApp.ns.split('__')[0]] : window;
+                (core).BranchManagementExtension.getAllStepDetails(
+                    copadoApp.data.flowId,
+                    function(result,event){
+                        if (event.status) {
+                            console.log(result);
+                            backDeploy.config.map = result;
+                            backDeploy.rerender();
+                            backDeploy.polling.jobsInProgress = false;
+                        }else if(event.status === 'exception') {
+                            console.error(result);
+                            alert(result)
+                        }else{
+                            console.warn(result);
+                            alert(result)
+                        }
+                    }
+                );
+                //backDeploy.config.map = getStepDetails();
+            }
+
+            function setLockScreenMessage(msg) {
+                console.debug('setLockScreenMessage()', msg);
+                var eltext = $copado('#screenLockerLightningText'),  eltLock = $copado('#screenLockerLightning');
+                if(msg) {
+                    eltext.text(msg);
+                    eltLock.show();
+                }else{
+                    eltext.text('');
+                    eltLock.hide();
+                }
+            }
+
+            var unlock = function() {
+                setLockScreenMessage('');
+            };
+            var lock = function() {
+                setLockScreenMessage('Loading...');
+            };
+
+        </script>
+        </apex:outputPanel>
+            <!--  oncomplete="setTimeout(setStepJSON(),500);" -->
+            <apex:actionFunction name="renderBoxes" reRender="Lightningform"/>
+
+            <!-- Continuous Integration Notes -->
+            <div id="logsPanel">
+                <section role="dialog" tabindex="-1" id="logsModal" aria-labelledby="modal-heading-01" aria-describedby="modal-content-id-1" class="slds-modal slds-modal_medium">
+                    <div class="slds-modal__container" style="width: 60% !important;">
+                        <header class="slds-modal__header">
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="closeLogsModal();return false;">
+                                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                    <use
+                                        xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#close')}">
+                                    </use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                            <apex:outputPanel id="Notes" layout="block">
+                                <h2 id="logsHeaderText" class="slds-text-heading_medium slds-hyphenate">
+                                    Latest Sync Logs
+                                </h2>
+                            </apex:outputPanel>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" s1tyle="height: 99%;">
+                            <div id="window" style="width:100%">
+                               <div class="slds-grid">
+                                    <div class="slds-col">
+                                        <apex:outputPanel layout="block" id="lastSyncResult" >
+                                            <div id="syncLogs"></div>
+                                            <script>try{ twistSection(document.getElementById('{!$Component.lastSyncResult}').getElementsByTagName('img')[0]); }catch(e){ console.warn('logs faillure'+e); }</script>
+                                        </apex:outputPanel>
+                                    </div>
+
+                                </div>
+                                </div>
+                            </div>
+                            <footer class="slds-modal__footer">
+                                <button class="slds-button slds-button_neutral" onclick="closeLogsModal(); return false;">Cancel</button>
+                            </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop" id="logsBackdrop"></div>
+            
+            </div>
+            <!-- END OF Continuous Integration Notes -->
+        </apex:form>
+
+
+    <apex:include pageName="copado__BranchManagementDialog"/>
+
+    </body>
+    <c:CheckFeaturesComponent />
+</apex:page>

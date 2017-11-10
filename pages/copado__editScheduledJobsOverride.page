@@ -1,0 +1,43 @@
+<apex:page id="thePage" standardController="copado__Scheduled_Job__c" extensions="copado.ScheduledJobExtension">
+    <style>
+    	.longerField { width:60%; }
+    </style>
+    <c:GAnalytics />
+    <apex:sectionHeader id="theHeader"/>
+    <apex:pageMessages id="the_messages"/>
+    <apex:form id="theForm">
+    	<apex:pageBlock id="pb" mode="edit" rendered="{!AND(showOptions,!showError)}">
+        	<apex:pageBlockButtons id="pbbs">
+            	<apex:commandButton id="btnSave" action="{!save}" title="{!$Label.copado__save}" value="{!$Label.copado__save}" />
+                <apex:commandButton id="btnCancel" action="{!cancel}" title="{!$Label.copado__cancel}" value="{!$Label.copado__cancel}" immediate="true" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection id="pbs1" columns="1">
+                <apex:inputField id="if_Name" value="{!copado__Scheduled_Job__c.Name}" styleClass="longerField" required="true" />
+            	<apex:pageBlockSectionItem id="pbsi1">
+                    <apex:outputLabel id="lbljsWebhookLookup" for="jsWebhookLookup">
+                        <img height="20" width="20" src="{!URLFOR($Resource.Statics,'img/icons/logo-icon.png')}" alt="{!$Label.LOOK_UP_COPADO_WEBHOOK}"/>
+                    </apex:outputLabel>
+                    <apex:outputPanel >
+                        <c:webhookLookup ></c:webhookLookup>
+                        <script>
+                            webhookLookup.config.URL_ELEMENT_ID = 'if_webhookUrl';
+                            webhookLookup.config.ADD_API_KEY_TO_URL = false;
+                            webhookLookup.onSuccessCB = function(){};
+                        </script>
+						<button class="btn" id="btnWebhookLookup" onclick="webhookLookup.show();return false;" value="{!$Label.copado__look_up_copado_webhook}">{!$Label.copado__look_up_copado_webhook}</button>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:inputField id="if_webhookUrl" value="{!copado__Scheduled_Job__c.copado__Webhook_URL__c}" styleClass="longerField" required="true" />
+                <apex:inputField id="if_RunAsUser" value="{!copado__Scheduled_Job__c.copado__Run_as_User__c}" styleClass="longerField" required="true" />
+                <apex:inputField id="if_DeletedRunAfterDays" value="{!copado__Scheduled_Job__c.copado__Delete_Runs_after_days__c}" styleClass="longerField" required="true" />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <script>
+        ga('send', 'pageview', {
+            'page': '/EditScheduledJobsOverride',
+            'title': 'Edit Scheduled Jobs Override'
+        });
+    </script>
+</apex:page>

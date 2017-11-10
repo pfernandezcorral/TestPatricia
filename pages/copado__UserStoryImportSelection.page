@@ -1,0 +1,32 @@
+<apex:page standardController="copado__User_Story__c" recordSetVar="records" extensions="copado.UserStoryImportSetController" action="{!initPage}">
+	<c:GAnalytics />
+	<apex:sectionHeader id="sectionHeader" title="{!$Label.copado__copado_change_management}"
+                        subtitle="{!$Label.copado__user_story_import_selection}"
+                        description="{!$Label.copado__user_story_import_description}"/>
+	<apex:pageMessages id="theMessages" />
+	
+	<apex:form id="theForm">
+		<apex:pageBlock id="pb" mode="edit">
+			<apex:pageBlockButtons id="pbButtons" location="bottom">
+				<apex:commandButton id="btnCancel" value="Cancel" action="{!cancel}" />
+				<apex:commandButton id="btnAssign" value="Add selections" action="{!assign}" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="pbs">
+				<apex:inputField value="{!dummy.copado__User_Story__c}" />
+			</apex:pageBlockSection>
+
+			<apex:pageBlockSection title="Previously committed metadata selections">
+               <apex:dataList value="{!allMetadata}" var="m">
+                    <apex:outputText value="{!m.t}.{!m.n}"/>
+                </apex:dataList>
+			</apex:pageBlockSection>
+            
+        </apex:pageBlock>
+	</apex:form>
+    <script>
+        ga('send', 'pageview', {
+          'page': '/UserStoryImportSelection',
+          'title': 'User Story Import Selection'
+        });
+    </script>
+</apex:page>

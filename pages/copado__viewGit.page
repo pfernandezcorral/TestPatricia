@@ -1,0 +1,101 @@
+<apex:page standardController="copado__Git_Repository__c" extensions="copado.EditGit" action="{!validate}" title="{!$Label.copado__view} {!$ObjectType.copado__Git_Repository__c.Label}">
+    <c:GAnalytics />
+    <script>
+    	function retrieveCommitsJS(){
+        	var branch = window.prompt('From which branch?','master'); 
+            if (branch && branch !=''){
+                doRetrieve(branch);
+                return false;
+            }
+            return true;
+        }
+    </script>
+    <apex:pageMessages id="theMessages" />
+	<apex:form id="theForm" rendered="{!AND(showOptions,!showError)}" >
+        <apex:actionFunction name="doRetrieve" action="{!retrieveCommits}" reRender="theMessages">
+            <apex:param name="branch" value=""/>
+        </apex:actionFunction>
+	<apex:sectionHeader title="{!$ObjectType.copado__Git_Repository__c.Label}" subtitle="{!git.Name}"/>
+     
+		<apex:pageBlock id="pb_createGit" mode="view" helpUrl="http://docs.copa.do/copado/git-repository" helpTitle="{!$Label.copado__help_for_this_page}">
+			<apex:pageblockButtons >
+                <apex:commandButton value="{!$Label.site.edit}" action="{!edit}" />
+                <apex:commandButton value="{!$Label.copado__delete}" action="{!delete}" />
+                <apex:commandButton value="{!$Label.copado__share}" action="{!URLFOR($Action.Git_Repository__c.Share,Git_Repository__c.Id)}" rendered="{!isShareable}"/>
+                <apex:commandButton value="{!$Label.copado__create_ssh_keys}" action="{!createSSHKey}" rendered="{!isSSHauthentication}"/>
+				<apex:commandButton value="{!$Label.copado__create_deployment}" action="{!deployCommits}"/>
+                <apex:commandButton value="Retrieve Commits" onclick="retrieveCommitsJS();" rerender="theMessages"/>                
+            </apex:pageblockButtons>
+            <apex:pageBlockSection columns="1">
+                <apex:outputField id="of_name" value="{!git.Name}" />
+                <apex:outputField id="of_uri" value="{!git.copado__URI__c}" />
+                <apex:outputField id="of_username" value="{!git.copado__Username__c}" rendered="{!!isSSHauthentication}" />
+                <apex:pageBlockSectionItem rendered="{!!isSSHauthentication}">
+					<apex:outputLabel value="{!$Label.copado__password}" />
+				    <apex:outputText id="ot_password" value="{!dumypass}"/>
+				</apex:pageBlockSectionItem> 
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="{!$Label.copado__other_information}" rendered="{!showOtherInformation}">
+                <apex:repeat value="{!$ObjectType.copado__Git_Repository__c.FieldSets.copado__CustomFields}" var="f">
+                    <apex:outputField value="{!copado__Git_Repository__c[f]}"/>
+                </apex:repeat>
+        	</apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.copado__current_keys}" rendered="{!hasKeys}" columns="1">
+                <apex:pageBlockTable id="tblKeys" value="{!attachments}" var="a">
+                	<apex:column id="col1">
+                        <apex:facet name="header">
+                        	<apex:outputLabel >{!$Label.copado__action_column_header}</apex:outputLabel>
+                        </apex:facet>
+                        <apex:outputPanel >
+                            <apex:commandLink action="{!viewKey}">{!$Label.copado__view}
+                                <apex:param assignTo="{!selectedKeyId}" value="{!a.Id}" name="selectedKeyId"/>
+                            </apex:commandLink>&nbsp;|&nbsp;
+                            <apex:commandLink action="{!deleteKey}">{!$Label.copado__delete}
+                                <apex:param assignTo="{!selectedKeyId}" value="{!a.Id}" name="selectedKeyId"/>
+                            </apex:commandLink>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column id="col2">
+                        <apex:facet name="header">
+                        	<apex:outputLabel >{!$ObjectType.Attachment.Fields.Name.Label}</apex:outputLabel>
+                        </apex:facet>
+                        <apex:outputLabel >{!a.Name}</apex:outputLabel>
+                    </apex:column>
+                    <apex:column id="col3">
+                        <apex:facet name="header">
+                        	<apex:outputLabel >{!$ObjectType.Attachment.Fields.LastModifiedDate.Label}</apex:outputLabel>
+                        </apex:facet>
+                        <apex:outputField value="{!a.LastModifiedDate}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection id="pbsViewKey" columns="1" rendered="{!keyVisible}" title="{!$Label.copado__key_content}" collapsible="false">
+				<textarea id="wrap" readonly="true" cols="150" rows="10" wrap="hard">{!selectedKeyContent}</textarea>
+                <apex:commandButton id="btnHideKey" value="{!$Label.copado__hide_key}" action="{!hideSSHkey}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="Latest Commits">
+                <apex:pageBlockTable var="cm" value="{!commits}" >
+                    <apex:column >
+                        <apex:outputText value="{!cm.id}"/>
+                        <apex:facet name="header">{!$ObjectType.copado__Git_Commit__c.fields.copado__Commit_Id__c.Label}</apex:facet>
+                    </apex:column>
+                    <apex:column >
+                        <apex:outputText value="{!cm.branch}"/>
+                        <apex:facet name="header">{!$ObjectType.copado__Git_Commit__c.fields.copado__Branch__c.Label}</apex:facet>
+                    </apex:column>
+                    <apex:column >
+                        <apex:outputText value="{0,date,yyyy-MM-dd}">
+							<apex:param value="{!cm.cdate}"/>
+						</apex:outputText>
+                        <apex:facet name="header">{!$ObjectType.copado__Git_Commit__c.fields.copado__Commit_Date__c.Label}</apex:facet>
+                    </apex:column>
+                    <apex:column >
+                        <apex:outputText value="{!cm.message}"/>
+                        <apex:facet name="header">{!$ObjectType.copado__Git_Commit__c.fields.copado__Commit_Message__c.Label}</apex:facet>
+                    </apex:column>
+	            </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+     </apex:form>
+     <apex:relatedList list="Git_Backups__r" rendered="{!AND(showOptions,!showError)}"/>
+</apex:page>

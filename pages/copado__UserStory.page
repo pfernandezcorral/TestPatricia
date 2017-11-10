@@ -1,0 +1,200 @@
+<apex:page standardController="copado__User_Story__c" extensions="copado.UserStoryExt,copado.Settings">
+<apex:slds />
+  <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+      <head>
+        <c:GAnalytics />
+        <script type="text/javascript">
+            function ToggleDropdown() {
+              var toggleButton = document.getElementById('toggleButton');
+              var pathWrapper = document.getElementById('pathWrapper');
+              var pathContent1 = document.getElementById('path-content-1');
+              toggleButton.classList.toggle("slds-flip_vertical");
+              pathWrapper.classList.toggle("slds-is-expanded");   
+              pathContent1.classList.toggle("slds-show"); 
+              pathContent1.classList.toggle("slds-hide");  
+            }
+        </script>
+        
+        <apex:includeScript value="{!URLFOR($Resource.copado__Statics,'js/libs/jquery.min.1.10.2.js')}" />
+        <script>
+            ga('send', 'pageview', {
+              'page': '/UserStory',
+              'title': 'User Story'
+            });
+            
+            var gitRepo = "{!JSENCODE(flowDetails.flow.copado__Git_Repository__c)}"
+            var commitCount = "{!commitCount}"
+            var branchBase = gitRepo ? "{!JSENCODE(flowDetails.flow.Git_Repository__r.copado__Branch_Base_URL__c)}" : null;
+            var readyFunc = function(){
+              var pullButton = $copado('<input id="customPullButton" type="button" class="btn" value="{!JSENCODE($Label.copado__create_pull_request)}" onclick="pullRequest();"/>');
+              if(branchBase != null && branchBase != '' && "{!copado__User_Story__c.Id}" != null && "{!copado__User_Story__c.Id}" != '' && commitCount > 0 && $copado('h3:contains("{!JSENCODE($ObjectType.copado__Pull_Request__c.Label)}")').first().size() > 0){
+                pullButton.appendTo($copado('[Id^=topButtonRow]'));
+              }
+              if('{!JSENCODE(IF(scaAccess,'true','false'))}' == 'false'){
+                $copado( "input[name$='static_code_analysis_summary']" ).remove();
+                $copado( "input[name$='run_static_code_analysis']" ).remove();
+              }
+            }
+            document.onreadystatechange = function(){
+                 if(document.readyState === 'complete'){
+                    readyFunc();
+                 }
+            }
+            
+            var pullRequest = function(){             
+              console.log('branchBase',branchBase);
+              console.log('targetBranch','{!JSENCODE(targetBranch)}');
+              if(branchBase != null && branchBase != '' ){                
+                var win = window.open(branchBase.replace('tree/','compare/{!JSENCODE(targetBranch)}...feature/{!JSENCODE(copado__User_Story__c.Name)}?expand=1'));
+                if (win) {
+                    //Browser has allowed it to be opened
+                    win.focus();
+                } else {
+                    //Browser has blocked it
+                    alert('{!JSENCODE($Label.copado__popup_blocker_message)}');
+                }
+              }else{
+
+              }
+            }
+            
+        </script>   
+      </head>
+      
+      <body>
+        <div class="slds-m-horizontal_medium">
+          <apex:outputPanel rendered="{!AND(hasActiveDeploymentFlow,showOptions)}">
+            <div class="slds-m-vertical_x-small">
+              <div id="pathWrapper" class="{!IF(OR(userStoriesAhead.size!=0,userStoriesBehind.size!=0),'slds-path-coach','')}">
+                
+                <!-- SLDS-Grid -->
+                  <div class="slds-grid">
+
+                    <!-- Toggle Button -->
+                    <apex:outputPanel rendered="{!OR(userStoriesAhead.size!=0,userStoriesBehind.size!=0)}" layout="none">
+                      <button id="toggleButton" class="slds-button slds-button_icon slds-button_icon-border-filled slds-path__trigger slds-no-flex slds-m-horizontal_small" title="{!$Label.Toggle_User_Stories_Ahead_and_Behind}" onclick="ToggleDropdown(this);return false;">
+                        <svg class="slds-button__icon" aria-hidden="true">
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#chevrondown')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">{!$Label.copado__toggle_user_stories_ahead_and_behind}"</span>
+                      </button>
+                    </apex:outputPanel>
+                    <!-- // Toggle Button -->
+
+                    <!-- Deployment Flow Steps -->
+                    <div class="slds-tabs--path" role="application">
+                      <ul class="slds-tabs--path__nav" role="tablist">
+                        <apex:repeat value="{!visualFlowSteps}" var="step">
+                          <li class="slds-tabs--path__item {!IF(visualFlowSteps.size == 1,'slds-is-complete slds-is-won',step.style)}" role="presentation">
+                            <a class="slds-tabs--path__link" id="tabs-path-93" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                              <span class="slds-tabs--path__title">{!step.environment}{!IF(AND(step.style='slds-is-current',flowDetails.isCBMFlow,OR(userStoriesAhead.size!=0,userStoriesBehind.size!=0)),userStoriesAheadBehindTitle,'')}</span>
+                            </a>
+                          </li>
+                        </apex:repeat>                     
+                      </ul>
+                    </div>
+                    <!-- // Deployment Flow Steps -->
+
+                    <!-- Validate Deployment Button -->
+                  <apex:outputPanel rendered="false" layout="none">
+                      <button class="slds-button slds-button_brand slds-path__mark-complete slds-no-flex slds-m-horizontal_small">
+                        Validate Deployment&nbsp;
+                        <svg class="slds-button__icon slds-button__icon_left" aria-hidden="true">
+                          <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS,'/assets/icons/utility-sprite/svg/symbols.svg#forward')}"></use>
+                        </svg>
+                      </button>
+                    </apex:outputPanel>
+                  <!-- // Validate Deployment Button -->
+                </div>
+                <!-- // SLDS-GRID -->
+
+                <apex:outputPanel rendered="{!OR(userStoriesAhead.size!=0,userStoriesBehind.size!=0)}" layout="none">
+                  <div id="path-content-1" aria-labelledby="path-1" class="slds-tabs_path__content slds-hide" role="tabpanel">
+                    <div class="slds-grid slds-grid_align-spread">
+                      <div class="slds-coach__keys slds-size_1-of-2 slds-m-left_x-large">
+
+                        <!-- User Stories Ahead Header -->
+                        <div class="slds-grid slds-grid_align-spread">
+                          <h2 class="slds-text-title_caps slds-p-bottom_small">User Stories Ahead</h2>
+                          <!--<span class="slds-text-body_small">
+                            <button class="slds-button slds-button_reset">Promote</button>
+                          </span>-->
+                        </div>
+                        <!-- // User Stories Ahead Header -->
+
+                        <!-- User Stories Ahead Table -->
+                        <dl class="slds-list_horizontal slds-wrap">
+                          <apex:repeat value="{!userStoriesAhead}" var="userStory">
+                            <dt class="slds-coach__item slds-item_label slds-text-color_weak">
+                              <apex:outputLink value="/{!userStory.Id}">{!userStory.Name}</apex:outputLink>
+                            </dt>
+                            <dd class="slds-coach__value slds-item_detail">
+                              <apex:outputField value="{!userStory.copado__User_Story_Title__c}"/>
+                            </dd>
+                          </apex:repeat>
+                          <apex:outputPanel rendered="{!userStoriesAhead.size=0}" layout="none">
+                            <dt class="slds-coach__item slds-item_label slds-text-color_weak">
+                            </dt>
+                            <dd class="slds-coach__value slds-item_detail">
+                            </dd>
+                          </apex:outputPanel>  
+                        </dl>
+                        <!-- // User Stories Ahead Table -->
+
+                      </div>
+                      <div class="slds-coach__guidance slds-size_1-of-2 slds-m-left_x-large">
+                        
+                        <!-- User Stories Behind Header -->
+                        <div class="slds-grid slds-grid_align-spread">
+                          <h2 class="slds-text-title_caps slds-p-bottom_small">User Stories Behind</h2>
+                          <!--<span class="slds-text-body_small">
+                            <button class="slds-button slds-button_reset">Back-Promote</button>
+                          </span>-->
+                        </div>
+                        <!-- // User Stories Behind Header -->
+
+                        <!-- User Stories Behind Table -->
+                        <dl class="slds-list_horizontal slds-wrap">
+                          <apex:repeat value="{!userStoriesBehind}" var="userStory">
+                            <dt class="slds-coach__item slds-item_label slds-text-color_weak">
+                              <apex:outputLink value="/{!userStory.Id}">{!userStory.Name}</apex:outputLink>
+                            </dt>
+                            <dd class="slds-coach__value slds-item_detail">
+                              <apex:outputField value="{!userStory.copado__User_Story_Title__c}"/>
+                            </dd>
+                          </apex:repeat> 
+                          <apex:outputPanel rendered="{!userStoriesBehind.size=0}" layout="none">
+                            <dt class="slds-coach__item slds-item_label slds-text-color_weak">
+                            </dt>
+                            <dd class="slds-coach__value slds-item_detail">
+                            </dd>
+                          </apex:outputPanel>                         
+                        </dl>
+                        <!-- // User Stories Behind Table -->
+
+                      </div>
+                    </div>
+                  </div>
+                </apex:outputPanel>
+              </div>
+            </div>
+          </apex:outputPanel>
+
+          <apex:form >
+          <c:JobsManager matchingKeys="GIT-{!flowDetails.flow.copado__Git_Repository__c}-{!targetBranch}"></c:JobsManager>
+          </apex:form>
+
+          <apex:detail subject="{!copado__User_Story__c.Id}" relatedList="true" title="true" showChatter="true" inlineEdit="true" rendered="{!AND(showOptions,!showError)}"/> 
+        </div>
+        <script type="text/javascript">
+            $copado( document ).ready(function() {
+                copadoStreamingService.ns = '{!JSENCODE(namespace)}';
+                copadoStreamingService.init();
+            });
+        </script>
+      </body> 
+  </html>
+  <apex:pageMessages id="theMessages" />
+</apex:page>
+
+<!--<input value="Create Pull Request" class="btn" name="create_pull_request" title="Create Pull Request" type="button" onclick="if (window.invokeOnClickJS_00b0Y000000G6cW) window.invokeOnClickJS_00b0Y000000G6cW(this); else if (parent.window.invokeOnClickJS_00b0Y000000G6cW) parent.window.invokeOnClickJS_00b0Y000000G6cW(this); return false">-->
