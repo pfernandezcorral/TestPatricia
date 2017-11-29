@@ -8,6 +8,6 @@ public class AccountOperationsTest {
         Test.stopTest();
         // Verify
         Account savedAcc = [SELECT Description FROM Account WHERE Id = :result.getId()];
-        System.assertEquals('Default Description12', savedAcc.Description);
+        System.assertEquals('Default Description', savedAcc.Description);
     }
 }
